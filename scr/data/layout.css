@@ -1,0 +1,742 @@
+/* = = = = = = = = datei format.css = = = = = = = = = = = = = = */
+/* ############################################################ */
+/* LED + Buttons */
+/* ############################################################ */
+/* how the green (ON) LED will look */
+.green-circle {
+      display: block;
+      height: 23px;
+      width: 23px;
+      background-color: #0f0;
+      -moz-border-radius: 11px;
+      -webkit-border-radius: 11px;
+      -khtml-border-radius: 11px;
+      border-radius: 11px;
+      margin-left: 1px;
+      background-image: -webkit-gradient(linear, 0% 0%, 0% 90%, from(rgba(46, 184, 0, 0.8)), to(rgba(148, 255, 112, .9)));@
+      border: 2px solid #ccc;
+      -webkit-box-shadow: rgba(11, 140, 27, 0.5) 0px 10px 16px;
+      -moz-box-shadow: rgba(11, 140, 27, 0.5) 0px 10px 16px; /* FF 3.5+ */
+      box-shadow: rgba(11, 140, 27, 0.5) 0px 10px 16px; /* FF 3.5+ */
+      }
+/* how the black (off)LED will look */
+.black-circle {
+      display: block;
+      height: 23px;
+      width: 23px;
+      background-color: #040;
+      -moz-border-radius: 11px;
+      -webkit-border-radius: 11px;
+      -khtml-border-radius: 11px;
+      border-radius: 11px;
+      margin-left: 1px;
+      -webkit-box-shadow: rgba(11, 140, 27, 0.5) 0px 10px 16px;
+      -moz-box-shadow: rgba(11, 140, 27, 0.5) 0px 10px 16px; /* FF 3.5+ */
+      box-shadow: rgba(11, 140, 27, 0.5) 0px 10px 16px; /* FF 3.5+ */
+      }
+
+/* this will add the glare to both of the LEDs */
+.glare {
+        position: relative;
+        top: 1;
+        left: 5px;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        -khtml-border-radius: 10px;
+        border-radius: 10px;
+        height: 1px;
+        width: 13px;
+        padding: 5px 0;
+        background-color: rgba(200, 200, 200, 0.25);
+        background-image: -webkit-gradient(linear, 0% 0%, 0% 95%, from(rgba(255, 255, 255, 0.7)), to(rgba(255, 255, 255, 0)));
+        }
+
+/* ############################################################ */
+/* Icons  */
+/* ############################################################ */
+.element { position: relative;}
+/*replace the content value with the
+corresponding value from the list below*/
+.element:before {
+  content: "\f0c9"; bars icon
+  font-family: FontAwesome;
+  font-style: normal;
+  font-weight: normal;
+  text-decoration: inherit;
+  color: #000;
+  font-size: 18px;
+  padding-right: 0.5em;
+  position: absolute;
+  top: 10px;
+  left: 0;
+}
+/* ############################################################ */
+/* Animation | drehen  */
+/* ############################################################ */
+.drehen { transition: all .8s ;}
+.drehen:hover { transform:rotate(1080deg); }
+/* ############################################################ */
+/* Menue */
+/* ############################################################ */
+#menu1 {width :100%;
+	margin:0;background:rgba(40,94,140,.3);
+	}
+
+#menu1 ul {display:inline-block;
+	text-align:center;
+	margin:0;
+	padding:0;width:100%
+	}
+
+#menu1 li {list-style-type : none;
+	margin:0rem;
+	padding:0 0rem 0 0;
+	}
+
+#menu1 li a {display:block;
+	text-align:left;
+	text-decoration : none;
+	font-size:1.4rem;
+	letter-spacing:.1rem;
+	padding:.4rem 1rem .4rem 1rem ;
+	margin: 0;
+	color:#fff  ;
+	}
+	/* - - - - - TOGGLE-FUNKTION (MEN� AN UND AUS) MIT CHECKBOX-HACK - - - - - */
+
+	/* men�-schalter formatierung */
+	label {display:inline-block;
+	color:#fff;
+	background:#A42629;
+	cursor:pointer;
+	padding:.5rem 1rem .5rem .6rem;
+	margin-bottom:1rem;
+	}
+
+	/* menu unsichtbar */
+	#menu1 {visibility:hidden;
+	transition:all 2s;opacity:0;
+	}
+
+	/* checkbox versteckt */
+	input[type=checkbox]{
+	display: none;
+	}
+
+	/* schaltet menu ein */
+	input[type=checkbox]:checked ~ #menu1  {
+	visibility:visible;opacity:1
+	}
+
+/* ############################################################ */
+/* allgemein */
+/* ############################################################ */
+*, *:before, *:after {
+-moz-box-sizing: border-box;
+-webkit-box-sizing: border-box;
+box-sizing: border-box;
+}
+html, body {
+font-family:'open_sanslight',georgia, tahoma, arial, Verdana, Segoe, 'Open Sans',helvetica,roboto ,sans-serif, cursive;
+font-size:62.5%;
+line-height:1.4;
+font-weight:normal;
+height:100%;
+}
+body {
+font-size:1.6rem;
+margin: 0 auto;
+}
+/* zus�tzliche zeilenabst�nde, absatz */
+.content br {
+line-height:.6;
+}
+p.break  {
+line-height:7rem;margin:0;
+}
+/* �berschriften */
+h1, h2, h3, h4, h5 {
+font-family:arial;
+font-weight:normal;
+}
+h1 {
+font-size:3.5rem;
+line-height: 3.6rem;
+margin-top: 0rem;
+margin-bottom: 4.2rem;
+letter-spacing:.0rem;
+}
+h2 {
+font-size:2.4rem;
+line-height: 2.6rem;
+margin-top: 0rem;
+margin-bottom: 3.5rem;
+letter-spacing:0rem;color:red;
+}
+h3 {
+font-size:1.9rem;
+line-height: 2.1rem;
+margin-top: 2.1rem;
+margin-bottom:1.4rem;
+letter-spacing:0rem;
+}
+/* allgemeine links  */
+a {background-color:transparent;
+color:#000;
+text-decoration: underline;
+}
+a:hover  {color:#000;
+background-color:transparent;
+text-decoration:none;
+}
+/* quelltext-erkl�rungen - wenn vorhanden */
+pre {white-space:pre-wrap;
+font-size:1.5rem;
+padding:1rem 0.5rem 1rem 0.5rem;
+margin-bottom:2rem;
+text-align:center;
+color:#000;
+background:#EAECFF;
+font-family:'arial';
+}
+/* Generic Styling, for Desktops/Laptops */
+body {
+  font-family: "Open Sans", sans-serif;
+  line-height: 1.25;
+}
+
+table {
+  /*border: 1px solid #ccc;
+  border-collapse: collapse;*/
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  table-layout: fixed;
+}
+
+table caption {
+  font-size: 1.5em;
+  margin: .5em 0 .75em;
+}
+
+table tr {
+  /*background-color: #f8f8f8;*/
+  /*border: 1px solid #ddd;*/
+  padding: .35em;
+}
+
+table th,
+table td {
+  padding: .25em;
+  text-align: center;
+  align: center;
+}
+
+table th {
+  font-size: .85em;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+	text-align: center;
+}
+
+/*STANDARD TABLE */
+/*
+.rTable { display: table; width: 80%; }
+.rTableRow { display: table-row; }
+.rTableHeading { display: table-header-group; background-color: #ddd; }
+.rTableCell, .rTableHead { display: table-cell; padding: .2em .2em; border: 0px solid #989999; }
+.rTableHeading { display: table-header-group; background-color: #ddd; font-weight: bold; }
+.rTableFoot { display: table-footer-group; font-weight: bold; background-color: #ddd; }
+.rTableBody { display: table-row-group; }
+*/
+.rTableRow {display: table;width: 100%; float:right; text-align: center;}
+.rTableCell {display: table-cell; width: 40%; border:1px #000 solid; align-content: stretch; text-align: justify;}
+.rTableWideCell {display: table-cell; border:1px #000 solid; text-align: center;}
+
+
+
+/* ############################################################ */
+/*  speziell*/
+/* ############################################################ */
+.container_haupt {
+margin:0 auto;
+width:100%;padding:0rem;
+background:#50acdb; /*Background Rahmen*/
+}
+.wrapper {box-shadow:0rem 0rem .2rem #4F4F4F;
+border: solid 1rem #000000; /*Rahmenfarbe*/
+margin:0 auto;
+width:100%;padding:0rem;
+}
+/* bilder allgemein -anpassen der gr�sse */
+img {max-width: 100%;display:inline-block;
+margin:0 auto;
+height: auto;
+}
+/* ############################################################ */
+/* bereich kopf */
+/* ############################################################ */
+.kopf-main {
+padding:0;
+margin:0 auto;
+}
+.kopf {display:table;
+width:100%;
+background:#50acdb;
+background:linear-gradient(to bottom , #ebf6fa, #48dbfb, #50acdb);
+margin: 0 auto;
+padding:0;
+}
+.kopfbox-1a  {
+padding:1rem ;
+display:block;
+text-align:center;
+}
+.kopfbox-1b  {
+display:block;text-align:center;
+padding:1rem;
+}
+.name {display:block;
+font-family:Arial;
+font-style:normal;
+font-size:2.6rem;
+line-height:2.8rem;
+letter-spacing:0.2rem;
+color:#000;
+}
+/*  die icons im kopfbereich */
+.kopf .icon-liste .fa {
+font-size:1.5rem;
+line-height:1.5rem;
+height:1.5rem;
+width:1.5rem;
+color:#BD1F1E;/*Schriftfarbe Link Symbole*/
+margin:.2rem;
+}
+.kopf .icon-liste ul {
+padding:0;
+margin:0;
+}
+.kopf .icon-liste li {display:inline;
+padding:0;
+margin:.5rem
+}
+/* ############################################################ */
+/* bereich logo */
+/* ############################################################ */
+.logo-main {
+padding:0;
+margin:0 auto;background-image:url(/wasser.jpg);
+background-position:50% 50%;
+background-repeat:no-repeat;
+background-size:cover;
+}
+.logo {display:Table;width:100%;
+margin: 0 auto;
+padding:0;
+}
+.logobox-1a  {
+padding:2rem ;
+display:none;text-align:center;
+}
+.logobox-1b  {
+/*min-height:32rem;*/
+padding:1rem 1rem 1rem 1rem;
+display:block;text-align:right;
+}
+.seitentitel { background:black;color:white;display:inline-block;
+padding:.5rem 1rem .5rem .6rem;
+margin-bottom:1rem;
+}
+/* ############################################################ */
+/* bereich content */
+/* ############################################################ */
+.content-main {
+padding: 0;
+margin:0;
+color:#000;
+/*min-height:40rem;*/
+}
+.content {background:#fff;display:Table;width:100%;
+margin: 0 auto;
+padding:0;
+}
+.contentbox-1a {
+	background:#50acdb;
+	background:linear-gradient( #50acdb 10%, #4d779b 30%  ,#356289 , #204a6d 70%,  #0c2f4d 100%);
+padding:4rem 2rem ;
+display:block;text-align:left;
+}
+.contentbox-1b  {background:#4d779b;
+display:block;text-align:left;
+padding:4rem 2rem 5rem 2rem ;
+}
+.content h1,.content h2, .content h3 {
+color:#000;
+}
+/* bilder im inhaltsbereich -anpassen der gr�sse */
+.content .wrapper-bild {display:block;text-align:center;
+margin:0 auto;font-size:1.5rem;
+}
+.content img {display:inline-block;margin:.4rem;
+border: solid .1rem #fff;
+}
+.content .bild-1_of_1 {max-width: 100%;
+}
+.content .bild-1_of_2 {max-width: 100%;
+}
+.content .bild-1_of_3 {max-width: 100%;
+}
+
+/ *===== menu 2  =====  */
+.menu2 ,
+.menu2  ul,
+.menu2  li {
+margin: 0;
+padding: 0;
+border: 0;
+}
+.menu2  {width:100%;
+}
+.menu2 ul { display:block;
+text-align:left;padding-left:2.2rem;
+}
+.menu2 li {
+width:100%;
+list-style-type: square;
+}
+.menu2 a {
+display : inline;
+width : 100%;
+text-align:left;
+color:#000;
+text-decoration: none;
+padding:.2rem;
+}
+.menu2 a:hover {
+color:#000;
+text-shadow:none;
+text-decoration: underline;
+}
+/* ############################################################ */
+/* bereich fusstop */
+/* ############################################################ */
+.fusstop-main {display:table;width:100%;height:100%;
+padding:0;/*Rahmen im Fussbreich*/
+margin:0 auto;background-image:url(../images/logo01.jpg);
+background-position:50% 50%;
+bckground-repeat:no-repeat;
+background-size:cover;
+color:#676409;/*Farbe Fuss*/
+font-size:1.5rem;
+line-height:1.7rem;
+}
+.fusstop {display:table;width:100%;
+margin: 0 auto;
+padding:0 ;
+}
+.fusstop-main {display:table;width:100%;
+padding:0;
+margin:0 auto;
+color:#fff;
+font-size:1.5rem;
+line-height:1.7rem;
+}
+.fusstop {display:table;width:100%;
+background:#4f4343;
+margin: 0 auto;
+padding:0 ;
+background-image:url(../images/logo01.jpg);
+background-position:50% 50%;
+background-repeat:no-repeat;
+background-size:cover;
+}
+.fusstopbox-1a  {display:block;
+/*background:rgba(40,94,140,.5);*/
+text-align:center;
+padding:3rem 1rem ;
+}
+.fusstopbox-1b  {
+display:none;
+text-align:center;
+padding:3rem 1rem;
+}
+/*  die icons im fusstopbox-1a  */
+.fusstopbox-1a .icon-liste .fa {
+width:3rem;
+color:#fff;
+text-shadow: 0 -1px 1px #104B10, 0 1px 1px #104B10;
+}
+.fusstopbox-1a .icon-liste ul {
+padding:0rem;
+margin:0;
+}
+.fusstopbox-1a .icon-liste li {list-style:none;
+padding:0rem;
+margin:0;
+}
+/*  die icons im fusstopbox-1b  */
+.fusstopbox-1b .icon-liste .fa {
+font-size:1.5rem;
+line-height:3rem;
+height:3rem;
+width:3rem;
+color:#000;
+margin:.2rem;
+border-radius:36rem;
+}
+.fusstopbox-1b .icon-liste ul {
+padding-left:0rem;
+padding-top:0rem;
+margin:0;
+}
+.fusstopbox-1b .icon-liste li {display:block;
+padding:0;
+margin:.5rem
+}
+/* ############################################################ */
+/* bereich fuss */
+/* ############################################################ */
+.fuss-main {color:#000;background:#0c2f4d;
+	background:linear-gradient(to bottom , #0c2f4d, #356289, #50acdb );
+	margin:0 auto;
+	}
+margin:0 auto;
+}
+.fuss {display:table;width:100%;
+margin: 0rem auto;
+padding: 0rem;
+}
+.fuss-main a {
+text-decoration:none;
+}
+.fussbox-1a  {display:block;
+text-align:center;
+padding:4rem .5rem 0rem .5rem ;
+}
+.fussbox-1b  {display:block;
+text-align:center;
+padding:0rem .5rem 4rem .5rem ;
+}
+.fussname {display:block;
+font-family:'Cursive';
+text-align:center;
+padding:.5rem;
+font-size:1.2rem;
+line-height:1.5rem;
+letter-spacing:0.1rem;
+color:#000;
+}
+/* ############################################################ */
+/* bereich fussmenu */
+/* ############################################################ */
+.fussmenu  {width:100%;margin:0 auto;
+}
+.fussmenu ul {padding:0;margin:0}
+.fussmenu li { display:inline;list-style: none;
+width:100%;
+margin-left:0rem;
+padding-left:.5rem;
+padding-right:.5rem;
+}
+.fussmenu a {font-size:1.1rem;
+width : 100%;
+text-align:left;
+color:#000;
+text-decoration:none;
+padding:0rem;
+letter-spacing:.2rem;
+}
+.fussmenu a:hover {
+color:#BD1F1E;
+text-shadow:none;
+background:transparent;
+text-decoration: underline;
+}
+/* ############################################################ */
+/* M E D I A   Q U E R I E S - BILDSCHIRMABFRAGEN*/
+/* ############################################################ */
+/* ======================== ab 360 pixel ====================== */
+@media (min-width: 360px) {
+.container_haupt {
+padding:2rem 0rem;
+}
+.wrapper {
+width:90vw;
+border: solid 1rem #fff;
+}
+}
+/* ======================== ab 480 pixel ====================== */
+@media (min-width: 480px) {
+.content .bild-1_of_1 {max-width: 80%; }
+.content .bild-1_of_2 {max-width: 80%; }
+.content .bild-1_of_3 {max-width: 80%; }
+}
+/* ======================== ab 550 pixel ====================== */
+@media (min-width: 550px) {
+.contentbox-1a ,.contentbox-1b   {
+padding:4rem;
+}
+}
+/* ======================== ab 600 pixel ====================== */
+@media (min-width: 600px) {
+/* keine angabe */
+}
+/* ======================== ab 640 pixel ====================== */
+@media (min-width: 640px) {
+html {
+font-size:68%;
+}
+.kopf {height:10rem; }
+.kopfbox-1a  {width:65%;
+display:table-cell;vertical-align:bottom;
+}
+.kopfbox-1b  {background:rgba(255,255,255,.6);
+width:35%;
+display:table-cell;vertical-align:bottom;
+}
+.content .bild-1_of_1 {max-width: 90%; }
+.content .bild-1_of_2 {max-width: 90%; }
+.content .bild-1_of_3 {max-width: 90%; }
+}
+/* ======================== ab 768 pixel ====================== */
+@media (min-width: 768px) {
+html {font-size:70%;}
+.wrapper {
+width:92vw;
+}
+.kopfbox-1a  {text-align:right; }
+.seitentitel { display:none }
+.logo { height:10rem; } /*height of the logo Box*/
+.logobox-1a  {width:65%;
+display:table-cell;vertical-align:middle;
+}
+.logobox-1b  {width:35%;
+display:table-cell;vertical-align:middle;
+background:rgba(40,94,140,.3);
+}
+.contentbox-1a  {width:65%;text-align:left;
+padding:4rem 2rem 6rem 3rem ;
+display:table-cell;vertical-align:top;
+}
+.contentbox-1b  {width:35%;padding:2rem 1rem 2rem 2rem ;
+display:table-cell;vertical-align:top;
+font-size:1.3rem;
+}
+.contentbox-1b h3 {
+font-size:1.6rem;
+line-height: 1.9rem;
+}
+.content img {margin:.1rem; }
+.content .bild-1_of_1 {max-width: 90%; }
+.content .bild-1_of_2 {max-width: 45%; }
+.content .bild-1_of_3 {max-width: 31%; }
+.fusstopbox-1a  {width:65%;
+display:table-cell;vertical-align:middle;
+}
+.fusstopbox-1b  {width:35%;
+display:table-cell;vertical-align:middle;
+}
+.fusstop {height:20rem; }
+}
+/* ======================== ab 800 pixel ====================== */
+@media (min-width: 800px) {
+html {font-size:78%;}
+}
+/* ======================== ab 1024 pixel ===================== */
+@media (min-width: 1024px) {
+html {
+font-size:80%;}
+.kopfbox-1a , .logobox-1a , .contentbox-1a,.fusstopbox-1a  {width:70%;
+}
+.kopfbox-1b , .logobox-1b , .contentbox-1b,.fusstopbox-1b  {width:30%;
+}
+}
+/* ======================== ab 1100 pixel ===================== */
+@media (min-width: 1100px) {
+.wrapper {
+width:90vw;
+}
+}
+/* ======================== ab 1200 pixel ===================== */
+@media (min-width: 1200px) {
+html {
+font-size:72%;}
+}
+/* ======================== ab 1300 pixel ===================== */
+@media (min-width: 1300px) {
+}
+/* ======================== ab 1400 pixel ===================== */
+@media (min-width: 1400px) {
+html {
+font-size:80%;
+}
+.wrapper {
+width:80vw;
+}
+}
+/* ############################################################ */
+/* M E D I A   Q U E R I E S - BILDSCHIRMABFRAGEN f�r das Men�*/
+/* ############################################################ */
+
+/* ==================================== ab 480 pixel ================================== */
+@media (min-width: 480px) {
+#menu1 li a {width:30rem;}
+}
+/* ==================================== ab 768 pixel ================================== */
+@media (min-width: 768px) {
+#menu1  { background:transparent;}
+#menu1 li a { width:100%;}
+#menu1 li a:hover { color:#A42629; }
+#menu1  li.active a  { color:#fff; background:rgba(255,255,255,.4);}
+/*#menu1  #aktuell  a  { color:#fff; background:rgba(255,255,255,.4);}*/
+/* menu-schalter unsichtbar */
+label{ display: none; }
+/* menu sichtbar */
+#menu1 { visibility:visible;opacity:1 }
+}
+/* ======================== for TABLE ===================== */
+@media screen and (max-width: 600px) {
+  table {border: 0;}
+
+  table caption {
+    font-size: 1.3em;
+  }
+
+  table thead {
+    border: none;
+    clip: rect(0 0 0 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    width: 1px;
+  }
+  table tr {
+    /*border-bottom: 3px solid #fff;*/
+    display: block;
+    margin-bottom: .625em;
+  }
+  table td {
+    /*border-bottom: 1px solid #ddd;*/
+    display: block;
+    font-size: .8em;
+    text-align: right;
+  }
+  table td::before {
+    /*
+    * aria-label has no advantage, it won't be read inside a table
+    content: attr(aria-label);
+    */
+    content: attr(data-label);
+    float: left;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  table td:last-child {
+    border-bottom: 0;
+  }
+}
+/* +  +  +  +  +  +  +  +  C O D E ENDE  +  +  +  +  +  +  +  + */
