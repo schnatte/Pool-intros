@@ -3,7 +3,7 @@ Project to control the water & heat pump according to the size of the pool.
 All this can be configured over a html interface.
 A distance control can be done over telegram
 
-##Implemented (TODOS)
+## Implemented (TODOS)
 - [x] NTP TIME CONTROL
 - [x] Webside for Value change and control
 - [x] Light Control ON/OFF
@@ -35,6 +35,6 @@ After a functional check I mounted it into the original Housing.
 ![Final Board2](https://github.com/schnatte/PoolControl/blob/master/Pictures/IMG_4118.jpg)
 I discover that the electrical noise on the switching relais and Interrupt was high and therefore I implemented some inductors to reduce it. An update on the Interrupt code was also mandatory to have a stable functionality. The error was that by switching on and off the MCU got's triggered and did some crayz things and chrashed from time to time.
 
-###The Relais Holder was made with
+### The Relais Holder was made with
 ![Relais1](https://github.com/schnatte/PoolControl/blob/master/Pictures/IMG_4106.jpg)
 ![Relais2](https://github.com/schnatte/PoolControl/blob/master/Pictures/IMG_4105.jpg)
