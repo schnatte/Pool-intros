@@ -6,7 +6,7 @@ A distance control can be done over telegram
 
 # External Sensor BME280
 The external sensor is build in a self made housing made of pot coaster
-![External Sensor](https://github.com/schnatte/PoolControl/blob/master/Pictures/IMG_4108.jpg)
+![External Sensor](https://github.com/schnatte/PoolControl/blob/master/Pictures/IMG_4608.jpg)
 
 
 # HW
