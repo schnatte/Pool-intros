@@ -52,7 +52,10 @@
 /* EEPROM Saving does not work - desactivated                                      */
 
 /* V0.x */
-/* WiFi Manager - Done  V0.2                                                       */
+/* WiFi Manager - Done  V0.2
+/* Quality of reception of WiFi Signal */
+/* Implement EMONCS for Monitoring */
+/* Power Management (Measure Current on Pump & PAC Phase and monitor over EMONCS)  */                                                   */
 /* Pressure Control for Filter                                                     */
 /* PH Measurement                                                                  */
 /* Redox Measurement                                                               */
@@ -64,7 +67,7 @@
 /* by Daniel Kettnaker  2019                                                       */
 /***********************************************************************************/
 /*
- * ESP8266 SPIFFS HTML Web Page with JPEG, PNG Image 
+ * ESP8266 SPIFFS HTML Web Page with JPEG, PNG Image
  *
  */
 
@@ -241,9 +244,9 @@ DallasTemperature sensors(&oneWire);
 DeviceAddress s1 = { 0x28, 0xFF, 0x97, 0x02, 0x0B, 0x00, 0x00, 0x68 }; //Water IN
 DeviceAddress s2 = { 0x28, 0xFF, 0xD9, 0xD5, 0xB1, 0x17, 0x4, 0x91 }; //Water OUT
 DeviceAddress tempDeviceAddress[4]; // We'll use this variable to store a found device address
-int numberOfDevices; // Number of temperature devices found  
+int numberOfDevices; // Number of temperature devices found
 
-//BME280 
+//BME280
 #define SEALEVELPRESSURE_HPA (1013.25)
 Adafruit_BME280 bme; // I2C
 /*---------------------------*/
@@ -260,7 +263,7 @@ void handleNewMessages(int numNewMessages) {
     String text = bot->messages[i].text;
     String from_name = bot->messages[i].from_name;
     if (from_name == "") from_name = "Guest";
- 
+
     DEBUG_PRINT("chat_id: ");
     DEBUG_PRINTLN(chat_id);
     DEBUG_PRINT("text: ");
@@ -274,7 +277,7 @@ void handleNewMessages(int numNewMessages) {
         if(RELAIS_STATUS.iSUMMERWINTER_STATUS == 0){
           RELAIS_STATUS.iSUMMERWINTER_STATUS = 1;
           bot->sendMessage(chat_id, "SummerWinter: ON", "");
-        }  
+        }
         valid = true;
       }
       if (text == "/SummerWinterOff") {
@@ -369,7 +372,7 @@ void handleNewMessages(int numNewMessages) {
         message += "°C\n";
         message += "WaterDelta: ";
         message += fWaterOut - fWaterIn;
-        message += "°C\n";        
+        message += "°C\n";
         message += "TempOut: ";
         message += fTempOut;
         message += "°C\n";
@@ -379,15 +382,15 @@ void handleNewMessages(int numNewMessages) {
         message += "PresOut: ";
         message += fPresOut;
         message += "hPa\n";
-        
+
         if(RELAIS_STATUS.iSUMMERWINTER_STATUS == 1){
           message += "SummerWinter: ON\n";
         }else if(RELAIS_STATUS.iSUMMERWINTER_STATUS == 0){
           message += "SummerWinter: OFF\n";
-        } 
+        }
         if(RELAIS_STATUS.iPumpStatus == 1){
           message += "Pump: OFF\n";
-          message += "Pump will start: "; 
+          message += "Pump will start: ";
           message +=EEPROM_VALUES.iSTART_HOURS[iACTUAL_CYCLE];
           message += ":00h\n";
         }else if(RELAIS_STATUS.iPumpStatus == 0){
@@ -428,13 +431,13 @@ void handleNewMessages(int numNewMessages) {
         bot->sendMessage(chat_id, message, "Markdown");
         valid = true;
       }
-  
+
       if (text == "/options") {
         String keyboardJson = "[[\"/SummerWinterOn\", \"/SummerWinterOff\"],[\"/PumpOn\", \"/PumpOff\"],[\"/LightOn\", \"/LightOff\"],[\"/PACOn\", \"/PACOff\"],[\"/IPAdress\", \"/Hostname\"],[\"/status\", \"/start\"]]";
         bot->sendMessageWithReplyKeyboard(chat_id, "Choose from one of the following options", "", keyboardJson, true);
         valid = true;
       }
-  
+
       if (text == "/start") {
         String welcome = "Welcome to Pool Control, " + from_name + ".\n";
         welcome += "You have the following possibilities:\n\n";
@@ -447,7 +450,7 @@ void handleNewMessages(int numNewMessages) {
         welcome += "/PACOn : to switch ON\n";
         welcome += "/PACOff : to switch OFF\n";
         welcome += "/IPAdress : returns the IP Adress\n";
-        welcome += "/Hostname : returns the Hostname\n";      
+        welcome += "/Hostname : returns the Hostname\n";
         welcome += "/status : Returns current status \n";
         welcome += "/options : returns the reply keyboard\n";
         bot->sendMessage(chat_id, welcome, "Markdown");
@@ -455,10 +458,10 @@ void handleNewMessages(int numNewMessages) {
       }
       if (valid == false) {
         bot->sendMessage(chat_id, "Input "+text+" is not valid please use /start for the options", "");
-      } 
+      }
     }else{
       bot->sendMessage(chat_id, "Your messages couldn't be interpreted by this chat partner. Sorry :)","");
-    }   
+    }
   }
 }
 
@@ -520,9 +523,9 @@ void PoolCalculations(void) {
   DEBUG_PRINTLN(iSTOP_HOURS[3]);
   DEBUG_PRINT("EEPROM_VALUES.iCORRECTION_FACTOR: ");
   DEBUG_PRINTLN(EEPROM_VALUES.iCORRECTION_FACTOR);
-  
+
   iPOOL_VOLUME = ((EEPROM_VALUES.iPOOL_LENGTH * EEPROM_VALUES.iPOOL_WIDE * EEPROM_VALUES.iPOOL_DEPTH)/1000)/1000; //Calculate POOL Volume in m3
-  
+
   iCYCLE_TIME = ((iPOOL_VOLUME * 2) / EEPROM_VALUES.iPUMP_POWER) + EEPROM_VALUES.iCORRECTION_FACTOR;//Calculate cycle time
   //iCYCLE_TIME = ((iCYCLE_TIME + 2/2)/2)*2;
 
@@ -531,7 +534,7 @@ void PoolCalculations(void) {
   }
   iSTOP_TIME = 24 - iCYCLE_TIME;//Calculate Stop time
   iCYCLE_TIME_PER_CYCLE = iCYCLE_TIME / EEPROM_VALUES.iCYCLE_AMOUNT; //Calculate cycle time per cycle depending on the amount of cycles
-  
+
   if (iCYCLE_TIME_PER_CYCLE <= 1) {
     iCYCLE_TIME_PER_CYCLE = 1;
   }
@@ -590,7 +593,7 @@ void PoolCalculations(void) {
   DEBUG_PRINTLN(iSTOP_HOURS[3]);
   DEBUG_PRINT("EEPROM_VALUES.iCORRECTION_FACTOR: ");
   DEBUG_PRINTLN(EEPROM_VALUES.iCORRECTION_FACTOR);
-   
+
 }//end of PoolCalculations
 #define POLY 0x82f63b78
 /*---------------------------*/
@@ -629,7 +632,7 @@ void setup() {
   pinMode(PUMP_RELAIS, OUTPUT); // set pin to output
   pinMode(PAC_RELAIS, OUTPUT); // set pin to output
   pinMode(SUMMERWINTER_RELAIS, OUTPUT); // set pin to output
-  
+
   //Set Relais to default to avoid toggle during start-up
   digitalWrite(PUMP_RELAIS, RELAIS_STATUS.iPumpStatus);//SET EXTERNAL PORT
   digitalWrite(LIGHT_RELAIS, RELAIS_STATUS.iLIGHT_STATUS);//SET EXTERNAL PORT
@@ -653,9 +656,9 @@ void setup() {
   DEBUG_PRINT("sizeof(RELAIS_STATUS_STRUCT): ");
   DEBUG_PRINTLN(sizeof(RELAIS_STATUS_STRUCT));
   DEBUG_PRINT("iAdr_Eeprom_runtime: ");
-  DEBUG_PRINTLN(iAdr_Eeprom_runtime);    
+  DEBUG_PRINTLN(iAdr_Eeprom_runtime);
   DEBUG_PRINT("iAdr_Eeprom_status: ");
-  DEBUG_PRINTLN(iAdr_Eeprom_status); 
+  DEBUG_PRINTLN(iAdr_Eeprom_status);
 
   DEBUG_PRINTLN("initialise EEPROM");
   if (!EEPROM.begin(EEPROM_SIZE))
@@ -667,7 +670,7 @@ void setup() {
 /*
   uint8_t *address = (uint8_t*)&EEPROM_VALUES;
   uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(EEPROM_STRUCT) - sizeof(uint32_t));       //address, size
-  EEPROM_VALUES.crc = calculatedCrc;  
+  EEPROM_VALUES.crc = calculatedCrc;
   //=> write to eeprom
   EEPROM.update(iAdr_Eeprom_Values, EEPROM_VALUES);
   EEPROM.commit();
@@ -682,7 +685,7 @@ void setup() {
   DEBUG_PRINTLN("Check Sensors in EEPROM");
   DEBUG_PRINTLN("EEPROM_VALUES.sensor1: ");
   for(uint8_t i = 0; i < 8; i++){
-    //DEBUG_PRINT(EEPROM_VALUES.sensor1[i], HEX);  
+    //DEBUG_PRINT(EEPROM_VALUES.sensor1[i], HEX);
   }
   DEBUG_PRINTLN("");
   DEBUG_PRINTLN("EEPROM_VALUES.sensor2: ");
@@ -691,7 +694,7 @@ void setup() {
   }
   DEBUG_PRINTLN("");
   DEBUG_PRINTLN("••••••••••••••••••••••");
-  
+
   //Check EEPROM Values for definitions
   bool valid = false;
   //check crc
@@ -699,14 +702,14 @@ void setup() {
   uint32_t calculatedCrcEEPROM = calcCrc(address+sizeof(uint32_t), sizeof(EEPROM_STRUCT) - sizeof(uint32_t));       //address, size
   DEBUG_PRINT("calculatedCrc bei check CRC: ");
   DEBUG_PRINTLN(calculatedCrcEEPROM);
-  
+
   if(calculatedCrcEEPROM == EEPROM_VALUES.crc){
     DEBUG_PRINTLN("EEPROM_VALUES CRC check was sucessfull");
     if (EEPROM_VALUES.STRUCTversion == 1){
       DEBUG_PRINTLN("EEPROM_VALUES Struct Version check was sucessfull");
       valid = true;
     }
-  }       
+  }
   if(valid == false){
     //Take default values
     DEBUG_PRINTLN("Take default values EEPROM");
@@ -727,7 +730,7 @@ void setup() {
     }
     DEBUG_PRINTLN("calculatedCrcEEPROM");
     calculatedCrcEEPROM = calcCrc(address+sizeof(uint32_t), sizeof(EEPROM_STRUCT) - sizeof(uint32_t));//address, size
-    
+
     DEBUG_PRINT("calculated Crc of default :");
     DEBUG_PRINTLN(calculatedCrcEEPROM);
     EEPROM_VALUES.crc = calculatedCrcEEPROM;
@@ -748,8 +751,8 @@ void setup() {
 //  DEBUG_PRINTLN("Save Sensors");
 //  DEBUG_PRINTLN("EEPROM_VALUES.sensor1: ");
 //  for(uint8_t i = 0; i < 8; i++){
-//    
-//    DEBUG_PRINT(EEPROM_VALUES.sensor1[i], HEX);  
+//
+//    DEBUG_PRINT(EEPROM_VALUES.sensor1[i], HEX);
 //  }
 //  DEBUG_PRINTLN("");
 //  DEBUG_PRINTLN("EEPROM_VALUES.sensor2: ");
@@ -772,23 +775,23 @@ void setup() {
   //check crc
   uint8_t *addressruntime = (uint8_t*)&RUN_TIME;
   uint32_t calculatedCrcruntime = calcCrc(addressruntime+sizeof(uint32_t), sizeof(RUN_TIME_STRUCT) - sizeof(uint32_t));//address, size
-  
+
   if(calculatedCrcruntime == RUN_TIME.crc){
     DEBUG_PRINTLN("RUN_TIME CRC check was sucessfull");
     if (RUN_TIME.STRUCTversion == 1){
       DEBUG_PRINTLN("RUN_TIME Struct Version check was sucessfull");
       valid = true;
     }
-  }      
+  }
   if(valid == false){
     //Take default values
     DEBUG_PRINTLN("Take default values Run Time");
     RUN_TIME.STRUCTversion = 1;
     RUN_TIME.iPUMP_RUN_TIME = 0;
     RUN_TIME.iLIGHT_RUN_TIME = 0;
-    
+
     calculatedCrcruntime = calcCrc(addressruntime+sizeof(uint32_t), sizeof(RUN_TIME_STRUCT) - sizeof(uint32_t));//address, size
-    
+
     DEBUG_PRINT("calculated Crc Run Time of default :");
     DEBUG_PRINTLN(calculatedCrcruntime);
     RUN_TIME.crc = calculatedCrcruntime;
@@ -805,14 +808,14 @@ void setup() {
   //check crc
   uint8_t *addressstatus = (uint8_t*)&RELAIS_STATUS;
   uint32_t calculatedCrcstatus = calcCrc(addressstatus+sizeof(uint32_t), sizeof(RELAIS_STATUS_STRUCT) - sizeof(uint32_t));//address, size
-  
+
   if(calculatedCrcstatus == RELAIS_STATUS.crc){
     DEBUG_PRINTLN("RELAIS_STATUS CRC check was sucessfull");
     if (RELAIS_STATUS.STRUCTversion == 1){
       DEBUG_PRINTLN("RELAIS_STATUS Struct Version check was sucessfull");
       valid = true;
     }
-  }      
+  }
   if(valid == false){
     //Take default values
     DEBUG_PRINTLN("Take default values Status");
@@ -821,9 +824,9 @@ void setup() {
     RELAIS_STATUS.iPumpStatus = 1; //0 = ON, 1 = OFF
     RELAIS_STATUS.iLIGHT_STATUS = 1; //0 = ON, 1 = OFF
     RELAIS_STATUS.iPAC_STATUS = 1; //0 = ON, 1 = OFF
-    
+
     calculatedCrcstatus = calcCrc(addressstatus+sizeof(uint32_t), sizeof(RELAIS_STATUS_STRUCT) - sizeof(uint32_t));//address, size
-    
+
     DEBUG_PRINT("calculated Crc RELAIS_STATUS of default :");
     DEBUG_PRINTLN(calculatedCrcstatus);
     RELAIS_STATUS.crc = calculatedCrcstatus;
@@ -839,27 +842,27 @@ void setup() {
   DEBUG_PRINT( "Total of ");
   DEBUG_PRINT( numberOfDevices );
   DEBUG_PRINTLN( " One Wire devices found.");
-  
+
   sensors.setResolution(EEPROM_VALUES.sensor1, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
   sensors.setResolution(EEPROM_VALUES.sensor2, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
-  
+
   //Init Sensorvalues
   //Check Sensors
   sensors.requestTemperatures();// Measurement may take up to 750ms
   delay(750);
   fWaterIn = sensors.getTempC(EEPROM_VALUES.sensor1);
   fWaterOut = sensors.getTempC(EEPROM_VALUES.sensor2);
-  
+
   DEBUG_PRINT("Water Temperature in: ");
   DEBUG_PRINT(fWaterIn);
-  DEBUG_PRINTLN(" °C"); 
+  DEBUG_PRINTLN(" °C");
   DEBUG_PRINT("Water Temperature out: ");
   DEBUG_PRINT(fWaterOut);
   DEBUG_PRINTLN(" °C");
   DEBUG_PRINT("Resolution for sensor1 actually set to: ");
   //DEBUG_PRINTLN(sensors.getResolution(EEPROM_VALUES.sensor1), DEC);
   DEBUG_PRINT("Resolution for sensor2 actually set to: ");
-  //DEBUG_PRINTLN(sensors.getResolution(EEPROM_VALUES.sensor2), DEC); 
+  //DEBUG_PRINTLN(sensors.getResolution(EEPROM_VALUES.sensor2), DEC);
   DEBUG_PRINTLN();
   if (bme.begin() == 0) {
     DEBUG_PRINTLN("Could not find a valid BME280 sensor, check wiring!");
@@ -867,18 +870,18 @@ void setup() {
   }
 
   //Print BME Values
-  fTempOut = bme.readTemperature(); 
-  fHumOut = bme.readHumidity(); 
+  fTempOut = bme.readTemperature();
+  fHumOut = bme.readHumidity();
   fPresOut = bme.readPressure() / 100.0F;
 
   DEBUG_PRINT("Temperature = ");
   DEBUG_PRINT(fTempOut);
   DEBUG_PRINTLN(" *C");
-  
+
   DEBUG_PRINT("Pressure = ");
   DEBUG_PRINT(fPresOut);
   DEBUG_PRINTLN(" hPa");
-  
+
   DEBUG_PRINT("Approx. Altitude = ");
   DEBUG_PRINT(bme.readAltitude(SEALEVELPRESSURE_HPA));
   DEBUG_PRINTLN(" m");
@@ -888,7 +891,7 @@ void setup() {
   DEBUG_PRINTLN(" %");
 
   PoolCalculations();//Calculate the values based on the pool size
-  
+
   //Initialize File System
   //SPIFFS.begin();
   if(!SPIFFS.begin(true)){
@@ -902,12 +905,12 @@ void setup() {
       return;
   }
   DEBUG_PRINTLN("File Content:");
-  while(file.available()){      
+  while(file.available()){
       BOTtoken=file.readStringUntil('\n');
       BOTtoken.trim();
       approved_chat_id=file.readStringUntil('\n');
       approved_chat_id.trim();
-  }    
+  }
   file.close();
   bot = new UniversalTelegramBot(BOTtoken, client);
   DEBUG_PRINTLN("=====================================");
@@ -917,7 +920,7 @@ void setup() {
   DEBUG_PRINTLN(approved_chat_id);
   DEBUG_PRINTLN(approved_chat_id.length());
   DEBUG_PRINTLN("=====================================");
-  
+
 
   // Connect to WiFi network
   DEBUG_PRINTLN();
@@ -935,7 +938,7 @@ void setup() {
   DEBUG_PRINTLN("");
   DEBUG_PRINTLN("WiFi connected");
 
-/* 
+/*
   WiFiManager wifiManager;
   wifiManager.autoConnect("AutoConnectAP");
   DEBUG_PRINTLN("WiFi connected");
@@ -1003,7 +1006,7 @@ void setup() {
   setSyncInterval(86400); //Timedelay for sync in sec 86400 = 1 Tag
   lokaleZeit();
   digitalClockDisplay();
-  
+
   // Start the server
   server.begin();
   DEBUG_PRINTLN("HTTP Server started");
@@ -1027,7 +1030,7 @@ void setup() {
     }
   }
   DEBUG_PRINT("iSTOP_HOURS[iACTUAL_CYCLE]):");
-  DEBUG_PRINTLN(iSTOP_HOURS[iACTUAL_CYCLE]); 
+  DEBUG_PRINTLN(iSTOP_HOURS[iACTUAL_CYCLE]);
   DEBUG_PRINT("iACTUAL_CYCLE:");
   DEBUG_PRINTLN(iACTUAL_CYCLE);
 }
@@ -1035,7 +1038,7 @@ void setup() {
 //MAIN LOOP
 //***********************************************
 void loop() {
-  server.handleClient();//Check Server 
+  server.handleClient();//Check Server
 
   //Wifi Connection check - Reconnect
   while(WiFi.status() != WL_CONNECTED && wifi_retry < 5 ) {
@@ -1051,7 +1054,7 @@ void loop() {
     wifi_retry = 0;
     DEBUG_PRINTLN("Reboot");
     iesp_restart++;
-    ESP.restart();   
+    ESP.restart();
   }
 
   //Check Relais status for runtime + status saving
@@ -1059,7 +1062,7 @@ void loop() {
   iPumpStatus_OLD = digitalRead(PUMP_RELAIS);
   iPAC_STATUS_OLD = digitalRead(PAC_RELAIS);
   iLIGHT_STATUS_OLD = digitalRead(LIGHT_RELAIS);
-  
+
   //Check Status and switch Relais
   digitalWrite(PUMP_RELAIS, RELAIS_STATUS.iPumpStatus);//SET EXTERNAL PORT
   digitalWrite(LIGHT_RELAIS, RELAIS_STATUS.iLIGHT_STATUS);//SET EXTERNAL PORT
@@ -1074,10 +1077,10 @@ void loop() {
       uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(RELAIS_STATUS_STRUCT) - sizeof(uint32_t));//address, size
       RELAIS_STATUS.crc = calculatedCrc;
       DEBUG_PRINT("calculated Status Crc: ");
-      DEBUG_PRINTLN(calculatedCrc);  
+      DEBUG_PRINTLN(calculatedCrc);
       //=> write to eeprom
-      EEPROM.put(iAdr_Eeprom_status, RELAIS_STATUS); 
-      EEPROM.commit(); 
+      EEPROM.put(iAdr_Eeprom_status, RELAIS_STATUS);
+      EEPROM.commit();
     }
   }
 */
@@ -1092,28 +1095,28 @@ void loop() {
          uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(RUN_TIME_STRUCT) - sizeof(uint32_t));//address, size
          RUN_TIME.crc = calculatedCrc;
          DEBUG_PRINT("calculated Runtime Crc: ");
-         DEBUG_PRINTLN(calculatedCrc);  
+         DEBUG_PRINTLN(calculatedCrc);
          //=> write to eeprom
-         EEPROM.put(iAdr_Eeprom_runtime, RUN_TIME); 
-         EEPROM.commit(); 
+         EEPROM.put(iAdr_Eeprom_runtime, RUN_TIME);
+         EEPROM.commit();
        }*/
     }
   }
-  
+
   if(iLIGHT_STATUS_OLD != digitalRead(LIGHT_RELAIS)){
     if(RELAIS_STATUS.iLIGHT_STATUS == 0){
       iLIGHT_TIME = millis();//Start counting
     }else if (RELAIS_STATUS.iLIGHT_STATUS == 1){
-      RUN_TIME.iLIGHT_RUN_TIME = (RUN_TIME.iLIGHT_RUN_TIME + (millis()-iLIGHT_TIME));//Stop counting in millisecondes /60000  
+      RUN_TIME.iLIGHT_RUN_TIME = (RUN_TIME.iLIGHT_RUN_TIME + (millis()-iLIGHT_TIME));//Stop counting in millisecondes /60000
       /*{//save to EEPROM
          uint8_t *address = (uint8_t*)&RUN_TIME;
          uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(RUN_TIME_STRUCT) - sizeof(uint32_t));//address, size
          RUN_TIME.crc = calculatedCrc;
          DEBUG_PRINT("calculated Runtime Crc: ");
-         DEBUG_PRINTLN(calculatedCrc);  
+         DEBUG_PRINTLN(calculatedCrc);
          //=> write to eeprom
-         EEPROM.put(iAdr_Eeprom_runtime, RUN_TIME); 
-         EEPROM.commit(); 
+         EEPROM.put(iAdr_Eeprom_runtime, RUN_TIME);
+         EEPROM.commit();
        }*/
     }
   }
@@ -1121,7 +1124,7 @@ void loop() {
   lokaleZeit(); //Check for time and save it to the variables
   Alarm();//ALARM check
 
-  //Telegram 
+  //Telegram
   if (millis() > Bot_lasttime + Bot_mtbs)  {
     int numNewMessages = bot->getUpdates(bot->last_message_received + 1);
 
@@ -1130,9 +1133,9 @@ void loop() {
       handleNewMessages(numNewMessages);
       numNewMessages = bot->getUpdates(bot->last_message_received + 1);
     }
-    Bot_lasttime = millis();    
-  }//end of if(millis() > Bot_lasttime + Bot_mtbs) 
-  
+    Bot_lasttime = millis();
+  }//end of if(millis() > Bot_lasttime + Bot_mtbs)
+
 }//end of loop
 /******************************************************************************/
 /*Interrupts*/
@@ -1156,13 +1159,13 @@ void ISR_PUMP_STATUS() {
     if(digitalRead(ISR_PUMP_SWITCH) == 0){
     //Interrupt is accepted, do something!
     RELAIS_STATUS.iPumpStatus = !RELAIS_STATUS.iPumpStatus;
-    //digitalWrite(PUMP_RELAIS, RELAIS_STATUS.iPumpStatus);//SET EXTERNAL PORT 
+    //digitalWrite(PUMP_RELAIS, RELAIS_STATUS.iPumpStatus);//SET EXTERNAL PORT
     }
   }
   oldTimePump = interrupt_time;
 }
 
-void ISR_LIGHT_STATUS() { 
+void ISR_LIGHT_STATUS() {
   unsigned long interrupt_time = millis();//Bouncing check
   //If interrupts come faster than Bouncing, assume it's a bounce and ignore
   if(interrupt_time - oldTimeLight > Bouncing){
@@ -1170,7 +1173,7 @@ void ISR_LIGHT_STATUS() {
       //Interrupt is accepted, do something!
       RELAIS_STATUS.iLIGHT_STATUS = !RELAIS_STATUS.iLIGHT_STATUS;
       //digitalWrite(LIGHT_RELAIS, RELAIS_STATUS.iLIGHT_STATUS);//SET EXTERNAL PORT
-    }  
+    }
   }
   oldTimeLight = interrupt_time;
 }
@@ -1179,7 +1182,7 @@ void ISR_PAC_STATUS() {
   unsigned long interrupt_time = millis();//Bouncing check
   //If interrupts come faster than Bouncing, assume it's a bounce and ignore
   if(interrupt_time - oldTimePAC > Bouncing){
-    if(digitalRead(ISR_PAC_SWITCH) == 0){ 
+    if(digitalRead(ISR_PAC_SWITCH) == 0){
     //Interrupt is accepted, do something!
     RELAIS_STATUS.iPAC_STATUS = !RELAIS_STATUS.iPAC_STATUS;
     //digitalWrite(PAC_RELAIS, RELAIS_STATUS.iPAC_STATUS);//SET EXTERNAL PORT
@@ -1260,12 +1263,12 @@ void printDigits(int digits) {
 /*= = = = = = = = = = handle_ONConnect = = = = = = = = = = */
 void handle_OnConnect() {
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", SendHTML());  
+  server.send(200, "text/html", SendHTML());
 }
 /*= = = = = = = = = = handle_INDEX = = = = = = = = = = */
 void handle_INDEX(){
   DEBUG_PRINTLN("handle_INDEX");
-  //server.send(200, "text/html", SendHTML());  
+  //server.send(200, "text/html", SendHTML());
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendIndexHTML());
 }
@@ -1275,7 +1278,7 @@ void handle_SUMMERWINTER() {
   DEBUG_PRINT("iSUMMERWINTER_STATUS: ");
   DEBUG_PRINTLN(RELAIS_STATUS.iSUMMERWINTER_STATUS);
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", SendHTML()); 
+  server.send(200, "text/html", SendHTML());
 }
 /*= = = = = = = = = = handle_PUMP_STATUS = = = = = = = = = = */
 void handle_PUMP_STATUS() {
@@ -1283,7 +1286,7 @@ void handle_PUMP_STATUS() {
   DEBUG_PRINT("iPumpStatus:");
   DEBUG_PRINTLN(RELAIS_STATUS.iPumpStatus);
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", SendHTML()); 
+  server.send(200, "text/html", SendHTML());
 }
 /*= = = = = = = = = = handle_LIGHT_STATUS = = = = = = = = = = */
 void handle_LIGHT_STATUS() {
@@ -1291,15 +1294,15 @@ void handle_LIGHT_STATUS() {
   DEBUG_PRINT("iLIGHT_STATUS:");
   DEBUG_PRINTLN(RELAIS_STATUS.iLIGHT_STATUS);
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", SendHTML()); 
+  server.send(200, "text/html", SendHTML());
 }
 /*= = = = = = = = = = handle_PAC_STATUS = = = = = = = = = = */
 void handle_PAC_STATUS() {
   RELAIS_STATUS.iPAC_STATUS = !RELAIS_STATUS.iPAC_STATUS;
   DEBUG_PRINT("iPAC_STATUS:");
-  DEBUG_PRINTLN(RELAIS_STATUS.iPAC_STATUS); 
+  DEBUG_PRINTLN(RELAIS_STATUS.iPAC_STATUS);
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", SendHTML()); 
+  server.send(200, "text/html", SendHTML());
 }
 /*= = = = = = = = = = handle_Button = = = = = = = = = = */
 void handle_Button() {
@@ -1398,18 +1401,18 @@ void handle_LED(){
       updated_info +=iACTUAL_CYCLE;
     }
     if(RELAIS_STATUS.iPumpStatus == 1){
-      updated_info += "Pump will start: "; 
+      updated_info += "Pump will start: ";
       updated_info +=EEPROM_VALUES.iSTART_HOURS[iACTUAL_CYCLE];
       updated_info += ":00h; iACTUAL_CYCLE: ";
       updated_info +=iACTUAL_CYCLE;
     }
-    
+
     updated_info += "\",\"value6\":\"";
     updated_info += RUN_TIME.iPUMP_RUN_TIME/60000;
     updated_info += "\",\"value7\":\"";
     updated_info +=RUN_TIME.iLIGHT_RUN_TIME/60000;
     updated_info += "\"}";
- 
+
     //send JSON string to Webside with updated information
     server.sendHeader("Connection", "close");
     server.send(200, "text/html", updated_info);
@@ -1427,25 +1430,25 @@ void handle_GAUGES(){
    //Check Sensors
   fWaterIn = sensors.getTempC(EEPROM_VALUES.sensor1);
   fWaterOut = sensors.getTempC(EEPROM_VALUES.sensor2);
-  fTempOut = bme.readTemperature(); 
-  fHumOut = bme.readHumidity(); 
-  fPresOut = bme.readPressure() / 100.0F; 
+  fTempOut = bme.readTemperature();
+  fHumOut = bme.readHumidity();
+  fPresOut = bme.readPressure() / 100.0F;
 
   updated_info = "{\"cols\":[{\"id\":\"\",\"label\":\"Label\",\"type\":\"string\"},";
   updated_info += "{\"id\":\"\",\"label\":\"Value\",\"type\":\"number\"}],";
 
   switch(s){
     case 1: updated_info += "\"rows\":[{\"c\":[{\"v\":\"IN\"},{\"v\":";
-            updated_info += fWaterIn; 
+            updated_info += fWaterIn;
             break;
     case 2: updated_info += "\"rows\":[{\"c\":[{\"v\":\"OUT\"},{\"v\":";
-            updated_info += fWaterOut;              
+            updated_info += fWaterOut;
             break;
     case 3: updated_info += "\"rows\":[{\"c\":[{\"v\":\"OUT\"},{\"v\":";
-            updated_info += fTempOut;        
+            updated_info += fTempOut;
             break;
     case 4: updated_info += "\"rows\":[{\"c\":[{\"v\":\"OUT\"},{\"v\":";
-            updated_info += fHumOut;           
+            updated_info += fHumOut;
             break;
     case 5: updated_info += "\"rows\":[{\"c\":[{\"v\":\"OUT\"},{\"v\":";
             updated_info += fPresOut;
@@ -1461,11 +1464,11 @@ void handle_GAUGES(){
 void handle_Config() {
   DEBUG_PRINTLN("handle_Config");
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", SendConfigHTML());  
+  server.send(200, "text/html", SendConfigHTML());
 }
 /*= = = = = = = = = = handle_Configuration = = = = = = = = = = */
 void handle_Configuration(){
-  int s, v; 
+  int s, v;
   String Value;
   String t_state = server.arg("setConfiguration");
   String t_value = server.arg("value");
@@ -1475,7 +1478,7 @@ void handle_Configuration(){
   DEBUG_PRINTLN(t_value);
 
   s = t_state.toInt();
-  v = t_value.toInt();  
+  v = t_value.toInt();
   switch(s){
     case 1: EEPROM_VALUES.iPOOL_LENGTH = v;//Pool Length in cm
             t_value = String(EEPROM_VALUES.iPOOL_LENGTH);
@@ -1514,7 +1517,7 @@ void handle_Configuration(){
 }
 /*= = = = = = = = = = handle_Configuration_Values = = = = = = = = = = */
 void handle_Configuration_Values(){
-  int s; 
+  int s;
   String Value;
   String t_state = server.arg("ValueButton");
   DEBUG_PRINT("t_state:");//Debug Info
@@ -1522,8 +1525,8 @@ void handle_Configuration_Values(){
 
   s = t_state.toInt();
   switch(s){
-    case 1: PoolCalculations();//Calculate Pool Configurations       
-            //Build Json String 
+    case 1: PoolCalculations();//Calculate Pool Configurations
+            //Build Json String
             Value = "{\"value1\":\"";
             Value += iPOOL_VOLUME;//Pool Volume
             Value += " m3\",\"value2\":\"";
@@ -1551,7 +1554,7 @@ void handle_Configuration_Values(){
               Value += EEPROM_VALUES.iSTART_HOURS[3];//Circulation Start Time
               Value += ":00h\",\"value10\":\"";
               Value += iSTOP_HOURS[3];//Circulation OFF Time
-            }       
+            }
             Value += ":00h\"}";
             break;
     case 2: //Save Values to EEPROM
@@ -1560,16 +1563,16 @@ void handle_Configuration_Values(){
             uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(EEPROM_STRUCT) - sizeof(uint32_t));       //address, size
             EEPROM_VALUES.crc = calculatedCrc;
             DEBUG_PRINT("calculatedCrc: ");
-            DEBUG_PRINTLN(calculatedCrc);  
+            DEBUG_PRINTLN(calculatedCrc);
             //=> write to eeprom
-            EEPROM.put(iAdr_Eeprom_Values, EEPROM_VALUES); 
+            EEPROM.put(iAdr_Eeprom_Values, EEPROM_VALUES);
             EEPROM.commit();
             }
             break;
     default: Value = "{\"value1\":\"1\",\"value2\":\"2\",\"value3\":\"3\",\"value4\":\"4\",\"value5\":\"5\"}"; break;
   }
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", Value); 
+  server.send(200, "text/html", Value);
 }
 /*= = = = = = = = handle_ScanSensors = = = = = = = = */
 void handle_ScanSensors(){
@@ -1604,13 +1607,13 @@ void handle_ScanSensors(){
   updated_info +="</option><option value='2'>\n";
   updated_info +=GetAddressToString(tempDeviceAddress[1]);
   updated_info +="</option>\n";
-  updated_info +="</select>\n"; 
-  updated_info +="<br>\n";   
+  updated_info +="</select>\n";
+  updated_info +="<br>\n";
   //Button - Script is already in website
   updated_info +="<button type='button' onclick='SaveSensors()'>Save Sensors</button>\n";
 
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", updated_info); 
+  server.send(200, "text/html", updated_info);
 }
 /*= = = = = = = = handle_SaveSensors = = = = = = = = */
 void handle_SaveSensors(){
@@ -1653,7 +1656,7 @@ void handle_SaveSensors(){
       sensors.getAddress(EEPROM_VALUES.sensor2, 1);
       //EEPROM_VALUES.sensor2 = tempDeviceAddress[1];
     }
-    updated_info +="\"}";   
+    updated_info +="\"}";
   }
   //Save Values to EEPROM
   {
@@ -1661,17 +1664,17 @@ void handle_SaveSensors(){
     uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(EEPROM_STRUCT) - sizeof(uint32_t));       //address, size
     EEPROM_VALUES.crc = calculatedCrc;
     DEBUG_PRINT("calculatedCrc: ");
-    DEBUG_PRINTLN(calculatedCrc);  
+    DEBUG_PRINTLN(calculatedCrc);
     //=> write to eeprom
-    EEPROM.put(iAdr_Eeprom_Values, EEPROM_VALUES); 
+    EEPROM.put(iAdr_Eeprom_Values, EEPROM_VALUES);
     EEPROM.commit();
   }
 DEBUG_PRINTLN("••••••••••••••••••••••");
   DEBUG_PRINTLN("Save Sensors in EEPROM");
   DEBUG_PRINTLN("EEPROM_VALUES.sensor1: ");
   for(uint8_t i = 0; i < 8; i++){
-    
-    //DEBUG_PRINT(EEPROM_VALUES.sensor1[i], HEX);  
+
+    //DEBUG_PRINT(EEPROM_VALUES.sensor1[i], HEX);
   }
   DEBUG_PRINTLN("");
   DEBUG_PRINTLN("EEPROM_VALUES.sensor2: ");
@@ -1681,85 +1684,85 @@ DEBUG_PRINTLN("•••••••••••••••••••••�
   }
   DEBUG_PRINTLN("");
   DEBUG_PRINTLN("••••••••••••••••••••••");
-  
+
   //updated_info = ""{\"WaterIN\":\"GetAddressToString(EEPROM_VALUES.sensor1)\",\"WaterOUT\":\"GetAddressToString(tempDeviceAddress[0])\"}";
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", updated_info); 
+  server.send(200, "text/html", updated_info);
 }
 /*= = = = = = = = handle_TEMPERATUREPRECISION = = = = = = = = */
 void handle_TempPreci(){
   DEBUG_PRINTLN("TempPreci");//Debug Info
-  int s; 
+  int s;
   String updated_info;
   String t_state = server.arg("TempP");
   DEBUG_PRINT("t_state:");
   DEBUG_PRINTLN(t_state);
 
-  EEPROM_VALUES.TEMPERATURE_PRECISION = t_state.toInt(); 
+  EEPROM_VALUES.TEMPERATURE_PRECISION = t_state.toInt();
   sensors.setResolution(EEPROM_VALUES.sensor1, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
   sensors.setResolution(EEPROM_VALUES.sensor2, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
-  DEBUG_PRINTLN("Temperature Precision is changed Save in EEPROM"); 
+  DEBUG_PRINTLN("Temperature Precision is changed Save in EEPROM");
   {
     uint8_t *address = (uint8_t*)&EEPROM_VALUES;
     uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(EEPROM_STRUCT) - sizeof(uint32_t));       //address, size
     EEPROM_VALUES.crc = calculatedCrc;
     DEBUG_PRINT("calculatedCrc: ");
-    DEBUG_PRINTLN(calculatedCrc);  
+    DEBUG_PRINTLN(calculatedCrc);
     //=> write to eeprom
-    EEPROM.put(iAdr_Eeprom_Values, EEPROM_VALUES); 
+    EEPROM.put(iAdr_Eeprom_Values, EEPROM_VALUES);
     EEPROM.commit();
   }
 
   updated_info = EEPROM_VALUES.TEMPERATURE_PRECISION;
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", updated_info); 
+  server.send(200, "text/html", updated_info);
 }
 /*= = = = = = = = handle_Reset_Values = = = = = = = = */
 void handle_Reset_Values(){
   DEBUG_PRINT("Reset_Values");//Debug Info
-  int s; 
-  String t_state = server.arg("Reset");   
+  int s;
+  String t_state = server.arg("Reset");
   String Value;
   s = t_state.toInt();
-  
+
   switch(s){
     case 1: RUN_TIME.iPUMP_RUN_TIME = 0;
             Value = "{\"value1\":\"0\"}";
             break;
     case 2: RUN_TIME.iLIGHT_RUN_TIME = 0;
             Value = "{\"value2\":\"0\"}";
-            break;   
-    default: break;                 
+            break;
+    default: break;
   }
-  DEBUG_PRINTLN("Reset Time Running values and save in EEPROM"); 
+  DEBUG_PRINTLN("Reset Time Running values and save in EEPROM");
   {
     uint8_t *address = (uint8_t*)&EEPROM_VALUES;
     uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(EEPROM_STRUCT) - sizeof(uint32_t));       //address, size
     EEPROM_VALUES.crc = calculatedCrc;
     DEBUG_PRINT("calculatedCrc: ");
-    DEBUG_PRINTLN(calculatedCrc);  
+    DEBUG_PRINTLN(calculatedCrc);
     //=> write to eeprom
-    EEPROM.put(iAdr_Eeprom_Values, EEPROM_VALUES); 
+    EEPROM.put(iAdr_Eeprom_Values, EEPROM_VALUES);
     EEPROM.commit();
   }
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", Value); 
+  server.send(200, "text/html", Value);
 }
 
 /*= = = = = = = = = = handle_Impressum = = = = = = = = = = */
 void handle_Impressum() {
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", SendImpressumHTML());  
+  server.send(200, "text/html", SendImpressumHTML());
 }
 /*= = = = = = = = = = handle_Datenschutz = = = = = = = = = = */
 void handle_Datenschutz() {
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", SendDatenschutzHTML());  
+  server.send(200, "text/html", SendDatenschutzHTML());
 }
 /*= = = = = = = = = = handle_Disclaimer = = = = = = = = = = */
 void handle_Disclaimer() {
   server.sendHeader("Connection", "close");
-  server.send(200, "text/html", SendDisclaimerHTML());  
+  server.send(200, "text/html", SendDisclaimerHTML());
 }
 /*= = = = = = = = = = handle_upload = = = = = = = = = = */
 void handle_upload(){
@@ -1816,7 +1819,7 @@ String SendHTML(){
   ptr +="<html>\n";
   ptr +="<head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0, user-scalable=no\">\n";
   ptr +="<title>POOL - Control</title>\n";
-  ptr +="<link rel='stylesheet' type='text/css' href='layout.css'>\n"; 
+  ptr +="<link rel='stylesheet' type='text/css' href='layout.css'>\n";
   //GOOGLE GAUGES FOR TEMPERATURE of DS SENSORS + BMS208
   ptr +="<script type=\"text/javascript\" src=\"https://www.google.com/jsapi\"></script>\n";
   //ptr +="<script type=\"text/javascript\" src=\"https://www.gstatic.com/charts/loader.js\"></script>\n";
@@ -1873,7 +1876,7 @@ String SendHTML(){
   ptr +="['OUT',\n";
   ptr +=fPresOut; // Temperature in Celsius
   ptr +="],]);\n";
-    
+
   //add °C to the gauges
   ptr +="var formatter1 = new google.visualization.NumberFormat({suffix:' C',pattern:'##.#'});\n";
   ptr +="formatter1.format(Tempdata1,1);\n";
@@ -1920,7 +1923,7 @@ String SendHTML(){
   ptr +="      }\n";
   ptr +="    if (this.readyState == 4 && this.status == 200 && counter == 2){\n";
   //ptr +="        console.log(JSON.stringify(this.responseText));\n";
-  ptr +="        var parsedData = JSON.parse(this.responseText);\n";  
+  ptr +="        var parsedData = JSON.parse(this.responseText);\n";
   ptr +="        Tempdata2 = new google.visualization.DataTable(parsedData);\n";
   ptr +="      }\n";
   ptr +="    if (this.readyState == 4 && this.status == 200 && counter == 3){\n";
@@ -1950,14 +1953,14 @@ String SendHTML(){
   ptr +="chart1.draw(Tempdata1, gaugeOptionsTemp);\n";
   ptr +="formatter1.format(Tempdata2,1);\n";
   ptr +="chart2.draw(Tempdata2, gaugeOptionsTemp);\n";
-  ptr +="formatter1.format(Tempoutdata1,1);\n"; 
+  ptr +="formatter1.format(Tempoutdata1,1);\n";
   ptr +="chart3.draw(Tempoutdata1, gaugeOptionsTempOUT);\n";
   ptr +="formatter2.format(Humoutdata1,1);\n";
   ptr +="chart4.draw(Humoutdata1, gaugeOptionsHumOUT);\n";
   ptr +="formatter3.format(Presoutdata1,1);\n";
-  ptr +="chart5.draw(Presoutdata1, gaugeOptionsPresOUT);\n";  
+  ptr +="chart5.draw(Presoutdata1, gaugeOptionsPresOUT);\n";
   ptr +="}, 9000);\n";
-  ptr +="};\n"; 
+  ptr +="};\n";
   ptr +="</script>\n";
   ptr +="</head>\n";
   //BODY
@@ -1972,37 +1975,37 @@ String SendHTML(){
   ptr +="<div class='kopfbox-1b icon-liste'></div>\n";
   ptr +="</div>\n";
   ptr +="</div>\n";
-  //LOGO 
+  //LOGO
   ptr +="<div class='logo-main'>\n";
   ptr +="<div class='logo'>\n";
   ptr +="<div class='logobox-1a'></div>\n";
   ptr +="<div class='logobox-1b'>\n";
 
   ptr +="<input type='checkbox' id='checkbox_toggle'>\n";
-  ptr +="<span class='seitentitel'>Home</span><label for='checkbox_toggle'>Menu</label>\n"; 
-  ptr +="<div id='menu1'>\n";  
+  ptr +="<span class='seitentitel'>Home</span><label for='checkbox_toggle'>Menu</label>\n";
+  ptr +="<div id='menu1'>\n";
   ptr +="<ul>\n";
   ptr +="<li class='active'><a onclick='index()'>Home</a></li>\n";
   ptr +="<li id='noneaktuell'><a onclick='config()'>Config</a></li>\n";
   ptr +="</ul>\n";
   ptr +="</div>\n";
   //Script to execute CONFIG MENUE in contenbox-1a
-  ptr +="<script src='https://code.jquery.com/jquery-latest.js' type='text/javascript'></script>\n"; 
+  ptr +="<script src='https://code.jquery.com/jquery-latest.js' type='text/javascript'></script>\n";
   ptr +="<script>\n";
   ptr +="function config() {\n";//Action on Config
-  
+
   ptr +="$(document).on('click', 'li', function(){\n";
   //ptr +="  alert($(this).attr('id'));\n";//MSGBOX on Display
   ptr +="  $('li').removeClass('active');\n";
   ptr +="  $(this).addClass('active');\n";
   ptr +="});\n";
-  
+
   ptr +="$.get('/config', function(data) {\n";
   ptr +="$('#ChangableContent').html(data);\n";
   ptr +="})\n";
   ptr +="document.getElementsByClassName('seitentitel')[0].innerHTML = 'Config';\n";
   ptr +="}\n";//end of Action on Config
-  
+
   ptr +="function index() {\n";//Action on Index/Home
 
   ptr +="$(document).on('click', 'li', function(){\n";
@@ -2010,9 +2013,9 @@ String SendHTML(){
   ptr +="  $('li').removeClass('active');\n";
   ptr +="  $(this).addClass('active');\n";
   ptr +="});\n";
-  
+
   ptr +="$.get('/index', function(data) {\n";
-  ptr +="$('#ChangableContent').html(data);\n"; 
+  ptr +="$('#ChangableContent').html(data);\n";
   ptr +="google.load(\"visualization\", \"1\", {packages:[\"gauge\"], callback: drawGauge});\n";//recall google gauges
   ptr +="})\n";
   ptr +="document.getElementsByClassName('seitentitel')[0].innerHTML = 'Home';\n";
@@ -2045,10 +2048,10 @@ String SendHTML(){
   //ptr +="<h1>Outside Temperature, Humidity, Pressure</h1>\n";
   ptr +="<table align='center'>\n";//Start to create the html table
   ptr +="<thead>\n";//Zeile 1 Überschrift
-  ptr +="<tr>\n";//Zeile 1 
-  ptr +="<th scope='col'>Outside Temerature</th>\n";  
+  ptr +="<tr>\n";//Zeile 1
+  ptr +="<th scope='col'>Outside Temerature</th>\n";
   ptr +="<th scope='col'>Outside Humidity</th>\n";
-  ptr +="<th scope='col'>Outside Pressure</th>\n";  
+  ptr +="<th scope='col'>Outside Pressure</th>\n";
   ptr +="</tr></thead>\n";
   ptr +="<tbody>\n";
   ptr +="<tr>\n";//Zeile 1
@@ -2066,57 +2069,57 @@ String SendHTML(){
   ptr +="<tr>\n";//Zeile 1
   ptr +="<td>Summer/Winter</td>\n";
   ptr +="<td><button type='button' onclick='sendData(1)'>ON/OFF</button></td>\n";
-  if (RELAIS_STATUS.iSUMMERWINTER_STATUS == 1) {  
+  if (RELAIS_STATUS.iSUMMERWINTER_STATUS == 1) {
   ptr +="<td><span id='LEDState1'><div class='green-circle'><div class='glare'></div></div></span></td>\n";
   }else{
   ptr +="<td><span id='LEDState1'><div class='black-circle'><div class='glare'></div></div></span></td>\n";
-  }  
+  }
   ptr +="</tr>\n";
-  
+
   ptr +="<tr>\n";//Zeile 2
   ptr +="<td>Pump</td>\n";
   ptr +="<td><button type='button' onclick='sendData(2)'>ON/OFF</button></td>\n";
-  if (RELAIS_STATUS.iPumpStatus == 0) {  
+  if (RELAIS_STATUS.iPumpStatus == 0) {
   ptr +="<td><span id='LEDState2'><div class='green-circle'><div class='glare'></div></div></span></td>\n";
   }else{
-  ptr +="<td><span id='LEDState2'><div class='black-circle'><div class='glare'></div></div></span></td>\n"; 
-  }   
-  ptr +="</tr>\n";  
+  ptr +="<td><span id='LEDState2'><div class='black-circle'><div class='glare'></div></div></span></td>\n";
+  }
+  ptr +="</tr>\n";
   ptr +="<tr>\n";//Zeile 3
   ptr +="<td colspan='3'><span id='PumpInfo'>PumpInfo</span></td>\n";
   ptr +="</tr>\n";
   ptr +="<tr>\n";//Zeile 4
   ptr +="<td>Light</td>\n";
   ptr +="<td><button type='button' onclick='sendData(3)'>ON/OFF</button></td>\n";
-  if (RELAIS_STATUS.iLIGHT_STATUS == 0) {  
-  ptr +="<td><span id='LEDState3'><div class='green-circle'><div class='glare'></div></div></span></td>\n"; 
+  if (RELAIS_STATUS.iLIGHT_STATUS == 0) {
+  ptr +="<td><span id='LEDState3'><div class='green-circle'><div class='glare'></div></div></span></td>\n";
   }else{
-  ptr +="<td><span id='LEDState3'><div class='black-circle'><div class='glare'></div></div></span></td>\n"; 
-  }  
+  ptr +="<td><span id='LEDState3'><div class='black-circle'><div class='glare'></div></div></span></td>\n";
+  }
   ptr +="</tr>\n";
-    
+
   ptr +="<tr>\n";//Zeile 5
   ptr +="<td>PAC</td>\n";
   ptr +="<td><button type='button' onclick='sendData(4)'>ON/OFF</button></td>\n";
   if (RELAIS_STATUS.iPAC_STATUS == 0) {
-  ptr +="<td><span id='LEDState4'><div class='green-circle'><div class='glare'></div></div></span></td>\n";  
+  ptr +="<td><span id='LEDState4'><div class='green-circle'><div class='glare'></div></div></span></td>\n";
   }else{
-  ptr +="<td><span id='LEDState4'><div class='black-circle'><div class='glare'></div></div></span></td>\n";  
+  ptr +="<td><span id='LEDState4'><div class='black-circle'><div class='glare'></div></div></span></td>\n";
   }
   ptr +="<tr>\n";//Zeile 6
   ptr +="<td colspan='3'>Pump Runtime: <span id='PUMP_RUN_TIME'>\n";
   ptr +=RUN_TIME.iPUMP_RUN_TIME/60000;
-  ptr +="</span> Minutes, <span id='PUMP_RUN_TIME'>\n"; 
+  ptr +="</span> Minutes, <span id='PUMP_RUN_TIME'>\n";
   ptr +=(RUN_TIME.iPUMP_RUN_TIME/60000)/60;
   ptr +="</span> Hours</td>\n";
-  ptr +="<tr>\n";//Zeile 7  
+  ptr +="<tr>\n";//Zeile 7
   ptr +="<td colspan='3'>Light Runtime: <span id='LIGHT_RUN_TIME'>\n";
   ptr +=RUN_TIME.iLIGHT_RUN_TIME/60000;
-  ptr +="</span> Minutes, <span id='LIGHT_RUN_TIME'>\n"; 
+  ptr +="</span> Minutes, <span id='LIGHT_RUN_TIME'>\n";
   ptr +=(RUN_TIME.iLIGHT_RUN_TIME/60000)/60;
   ptr +="</span> Hours</td>\n";
   ptr +="</tr></table>\n";//</tbody>
-  
+
   //Check Button Click and switch LED ON/OFF
   ptr +="<script>\n";
   ptr +="function sendData(button){\n";
@@ -2141,7 +2144,7 @@ String SendHTML(){
   //Check Button & LED Status and update accordingly
   ptr +="window.setInterval(function(){\n";
   //ptr +=" LEDState()},8000);\n";   //sequence 8 seconds
-   
+
   //ptr +="function LEDState(){\n";
   ptr +="  var xhttp = new XMLHttpRequest();\n";
   ptr +="  xhttp.onreadystatechange = function(){\n";
@@ -2161,8 +2164,8 @@ String SendHTML(){
   ptr +="xhttp.send();\n";
   ptr +="},8000);\n";//sequence 8 seconds
   ptr +="</script>\n";
-    
-  ptr +="</div>\n";  
+
+  ptr +="</div>\n";
   ptr +="</div>\n";
   ptr +="</div>\n";
   //FUSS
@@ -2182,17 +2185,17 @@ String SendHTML(){
   ptr +="  $('li').removeClass('active');\n";
   ptr +="});\n";
   ptr +="$.get('/Impressum', function(data) {\n";
-  ptr +="$('#ChangableContent').html(data);\n";  
+  ptr +="$('#ChangableContent').html(data);\n";
   ptr +="})\n";
   ptr +="document.getElementsByClassName('seitentitel')[0].innerHTML = 'Impressum';\n";
   ptr +="}\n";
-  
+
   ptr +="function Datenschutz() {\n";
   ptr +="$(document).on('click', 'li', function(){\n";
   ptr +="  $('li').removeClass('active');\n";
   ptr +="});\n";
   ptr +="$.get('/Datenschutz', function(data) {\n";
-  ptr +="$('#ChangableContent').html(data);\n";  
+  ptr +="$('#ChangableContent').html(data);\n";
   ptr +="})\n";
   ptr +="document.getElementsByClassName('seitentitel')[0].innerHTML = 'Datenschutz';\n";
   ptr +="}\n";
@@ -2202,7 +2205,7 @@ String SendHTML(){
   ptr +="  $('li').removeClass('active');\n";
   ptr +="});\n";
   ptr +="$.get('/Disclaimer', function(data) {\n";
-  ptr +="$('#ChangableContent').html(data);\n";  
+  ptr +="$('#ChangableContent').html(data);\n";
   ptr +="})\n";
   ptr +="document.getElementsByClassName('seitentitel')[0].innerHTML = 'Disclaimer';\n";
   ptr +="}\n";
@@ -2212,13 +2215,13 @@ String SendHTML(){
   ptr +="  $('li').removeClass('active');\n";
   ptr +="});\n";
   ptr +="$.get('/Upload', function(data) {\n";
-  ptr +="$('#ChangableContent').html(data);\n";  
+  ptr +="$('#ChangableContent').html(data);\n";
   ptr +="})\n";
   ptr +="document.getElementsByClassName('seitentitel')[0].innerHTML = 'Upload';\n";
   ptr +="}\n";
-  
+
   ptr +="</script>\n";
-  
+
   ptr +="</ul>\n";
   ptr +="</div>\n";
   ptr +="</div>\n";
@@ -2266,7 +2269,7 @@ String SendConfigHTML(){
   ptr +="<div class='rTableCell' align='center'><span id='config2'>\n";
   ptr +=EEPROM_VALUES.iPOOL_WIDE;
   ptr +=" cm</span></div>\n";
-  ptr +="<div class='rTableCell'>\n";  
+  ptr +="<div class='rTableCell'>\n";
   ptr +="<select name='POOLWIDE' id='POOLWIDE' onchange='submitConfiguration(2)'>\n";
   ptr +="<option value="">Choose here</option>\n";
   ptr +="<option value='100'>1,0m</option><option value='150'>1,5m</option>\n";
@@ -2278,7 +2281,7 @@ String SendConfigHTML(){
   ptr +="</select>\n";
   ptr +="</div>\n";
   ptr +="</div>\n";
-  
+
   ptr +="<div class='rTableRow'>\n";
   ptr +="<div class='rTableCell'><h4>Pool Depth[m]</h4></div>\n";
   ptr +="<div class='rTableCell' align='center'><span id='config3'>\n";
@@ -2298,7 +2301,7 @@ String SendConfigHTML(){
   ptr +="</select>\n";
   ptr +="</div>\n";
   ptr +="</div>\n";
-  
+
   ptr +="<div class='rTableRow'>\n";
   ptr +="<div class='rTableCell'><h4>Pump Power[m3/h]</h4></div>\n";
   ptr +="<div class='rTableCell' align='center'><span id='config4'>\n";
@@ -2322,7 +2325,7 @@ String SendConfigHTML(){
   ptr +="</select>\n";
   ptr +="</div>\n";
   ptr +="</div>\n";
-  
+
   ptr +="<div class='rTableRow'>\n";
   ptr +="<div class='rTableCell'><h4>Starttime [HH:00]</h4></div>\n";
   ptr +="<div class='rTableCell' align='center'><span id='config5'>\n";
@@ -2346,13 +2349,13 @@ String SendConfigHTML(){
   ptr +="</select>\n";
   ptr +="</div>\n";
   ptr +="</div>\n";
-  
+
   ptr +="<div class='rTableRow'>\n";
   ptr +="<div class='rTableCell'><h4>Cycle amount []</h4></div>\n";
   ptr +="<div class='rTableCell' align='center'><span id='config6'>\n";
   ptr +=EEPROM_VALUES.iCYCLE_AMOUNT;
-  ptr +="x</span></div>\n"; 
-  ptr +="<div class='rTableCell'>\n";  
+  ptr +="x</span></div>\n";
+  ptr +="<div class='rTableCell'>\n";
   ptr +="<select name='CYCLEAMOUNT' id='CYCLEAMOUNT' onchange='submitConfiguration(6)'>\n";
   ptr +="<option value="">Choose here</option>\n";
   ptr +="<option value='1'>1</option><option value='2'>2</option>\n";
@@ -2364,13 +2367,13 @@ String SendConfigHTML(){
   ptr +="<div class='rTableCell' align='center'><span id='config7'>\n";
   ptr +=EEPROM_VALUES.iCORRECTION_FACTOR;
   ptr +="</span></div>\n";
-  ptr +="<div class='rTableCell'>\n";  
+  ptr +="<div class='rTableCell'>\n";
   ptr +="<select name='CORRECTIONFACTOR' id='CORRECTIONFACTOR' onchange='submitConfiguration(7)'>\n";
   ptr +="<option value="">Choose here</option>\n";
   ptr +="<option value='1'>1</option><option value='3'>3</option>\n";
   ptr +="<option value='5'>5</option><option value='7'>7</option>\n";
   ptr +="<option value='9'>9</option><option value='11'>11</option>\n";
-  ptr +="<option value='13'>13</option><option value='15'>15</option>\n";  
+  ptr +="<option value='13'>13</option><option value='15'>15</option>\n";
   ptr +="<option value='17'>17</option><option value='19'>19</option>\n";
   ptr +="<option value='21'>21</option><option value='23'>23</option></select></div>\n";
   ptr +="</div>\n";
@@ -2381,44 +2384,44 @@ String SendConfigHTML(){
   ptr +="<button type='button' onclick='ValueButton(2)'>Save Values</button>\n";
 
   ptr +="<br><center><h2>Output Values</h2></center>\n";
-    
+
   ptr +="<div class='rTableRow'>\n";
-  ptr +="<div class='rTableCell'>POOL VOLUME</div>\n"; 
+  ptr +="<div class='rTableCell'>POOL VOLUME</div>\n";
   ptr +="<div class='rTableCell'><span id='value1'>\n";
   ptr +=iPOOL_VOLUME;
-  ptr +=" m3</span></div>\n";  
+  ptr +=" m3</span></div>\n";
   ptr +="</div>\n";
 
   ptr +="<div class='rTableRow'>\n";
-  ptr +="<div class='rTableCell'>Total Circulation ON Time / per day<br><math>CYCLE_TIME<mo>= </mo><mfrac><mi>(POOL_VOLUME * 2)</mi><mi> PUMP_POWER </mi></mfrac><mo>*</mo><mi>Correction FACTOR</mi></math></div>\n"; 
-  ptr +="<div class='rTableCell'><span id='value2'>\n"; 
+  ptr +="<div class='rTableCell'>Total Circulation ON Time / per day<br><math>CYCLE_TIME<mo>= </mo><mfrac><mi>(POOL_VOLUME * 2)</mi><mi> PUMP_POWER </mi></mfrac><mo>*</mo><mi>Correction FACTOR</mi></math></div>\n";
+  ptr +="<div class='rTableCell'><span id='value2'>\n";
   ptr +=iCYCLE_TIME;
   ptr +=" h</span></div>\n";
   ptr +="</div>\n";
 
   ptr +="<div class='rTableRow'>\n";
-  ptr +="<div class='rTableCell'>Total Circulation OFF Time / per day</div>\n"; 
+  ptr +="<div class='rTableCell'>Total Circulation OFF Time / per day</div>\n";
   ptr +="<div class='rTableCell'><span id='value3'>\n";
   ptr +=iSTOP_TIME;
   ptr +=" h</span></div>\n";
   ptr +="</div>\n";
 
   ptr +="<div class='rTableRow'>\n";
-  ptr +="<div class='rTableCell'>Circulation ON Time / per cycle</div>\n"; 
+  ptr +="<div class='rTableCell'>Circulation ON Time / per cycle</div>\n";
   ptr +="<div class='rTableCell'><span id='value4'>\n";
   ptr +=iCYCLE_TIME_PER_CYCLE;
   ptr +=" h</span></div>\n";
   ptr +="</div>\n";
 
   ptr +="<div class='rTableRow'>\n";
-  ptr +="<div class='rTableCell'>Circulation START Time 1</div>\n"; 
+  ptr +="<div class='rTableCell'>Circulation START Time 1</div>\n";
   ptr +="<div class='rTableCell'><span id='value5'>\n";
   ptr +=EEPROM_VALUES.iSTART_HOURS[1];
   ptr +=":00h</span></div>\n";
   ptr +="</div>\n";
 
   ptr +="<div class='rTableRow'>\n";
-  ptr +="<div class='rTableCell'>Circulation STOP Time 1</div>\n"; 
+  ptr +="<div class='rTableCell'>Circulation STOP Time 1</div>\n";
   ptr +="<div class='rTableCell'><span id='value6'>\n";
   ptr +=iSTOP_HOURS[1];
   ptr +=":00h</span></div>\n";
@@ -2426,68 +2429,68 @@ String SendConfigHTML(){
 
   if(EEPROM_VALUES.iCYCLE_AMOUNT == 2){
     ptr +="<div class='rTableRow'>\n";
-    ptr +="<div class='rTableCell'>Circulation START Time 2\n"; 
-    ptr +="</div><div class='rTableCell'><span id='value7'>\n"; 
+    ptr +="<div class='rTableCell'>Circulation START Time 2\n";
+    ptr +="</div><div class='rTableCell'><span id='value7'>\n";
     ptr +=EEPROM_VALUES.iSTART_HOURS[2];
     ptr +=":00h</span></div></div>\n";
-    
+
     ptr +="<div class='rTableRow'>\n";
-    ptr +="<div class='rTableCell'>Circulation STOP Time 2\n"; 
-    ptr +="</div><div class='rTableCell'><span id='value8'>\n"; 
+    ptr +="<div class='rTableCell'>Circulation STOP Time 2\n";
+    ptr +="</div><div class='rTableCell'><span id='value8'>\n";
     ptr +=iSTOP_HOURS[2];
     ptr +=":00h</span></div></div>\n";
   }
   if(EEPROM_VALUES.iCYCLE_AMOUNT == 3){
     ptr +="<div class='rTableRow'>\n";
-    ptr +="<div class='rTableCell'>Circulation START Time 2\n"; 
-    ptr +="</div><div class='rTableCell'><span id='value7'>\n"; 
+    ptr +="<div class='rTableCell'>Circulation START Time 2\n";
+    ptr +="</div><div class='rTableCell'><span id='value7'>\n";
     ptr +=EEPROM_VALUES.iSTART_HOURS[2];
     ptr +=":00h</span></div></div>\n";
-    
+
     ptr +="<div class='rTableRow'>\n";
-    ptr +="<div class='rTableCell'>Circulation STOP Time 2\n"; 
-    ptr +="</div><div class='rTableCell'><span id='value8'>\n"; 
+    ptr +="<div class='rTableCell'>Circulation STOP Time 2\n";
+    ptr +="</div><div class='rTableCell'><span id='value8'>\n";
     ptr +=iSTOP_HOURS[2];
     ptr +=":00h</span></div></div>\n";
 
     ptr +="<div class='rTableRow'>\n";
-    ptr +="<div class='rTableCell'>Circulation START Time 3\n"; 
-    ptr +="</div><div class='rTableCell'><span id='value9'>\n"; 
+    ptr +="<div class='rTableCell'>Circulation START Time 3\n";
+    ptr +="</div><div class='rTableCell'><span id='value9'>\n";
     ptr +=EEPROM_VALUES.iSTART_HOURS[3];
     ptr +=":00h</span></div></div>\n";
-    
+
     ptr +="<div class='rTableRow'>\n";
-    ptr +="<div class='rTableCell'>Circulation STOP Time 3\n"; 
-    ptr +="</div><div class='rTableCell'><span id='value10'>\n"; 
+    ptr +="<div class='rTableCell'>Circulation STOP Time 3\n";
+    ptr +="</div><div class='rTableCell'><span id='value10'>\n";
     ptr +=iSTOP_HOURS[3];
     ptr +=":00h</span></div></div>\n";
   }
-      
+
   ptr +="</div>\n";
   //Drop down Menue Script
   ptr +="<script>\n";
   ptr +="function submitConfiguration(config){\n";
   ptr +="if(config == 1){\n";
-  ptr +=" myVar = document.getElementById('POOLLENGTH').value;\n";        
+  ptr +=" myVar = document.getElementById('POOLLENGTH').value;\n";
   ptr +="}\n";
   ptr +="if(config == 2){\n";
-  ptr +=" myVar = document.getElementById('POOLWIDE').value;\n";  
+  ptr +=" myVar = document.getElementById('POOLWIDE').value;\n";
   ptr +="}\n";
   ptr +="if(config == 3){\n";
-  ptr +=" myVar = document.getElementById('POOLDEPTH').value;\n"; 
+  ptr +=" myVar = document.getElementById('POOLDEPTH').value;\n";
   ptr +="}\n";
   ptr +="if(config == 4){\n";
-  ptr +="        myVar = document.getElementById('PUMPPOWER').value;\n";     
+  ptr +="        myVar = document.getElementById('PUMPPOWER').value;\n";
   ptr +="}\n";
   ptr +="if(config == 5){\n";
-  ptr +=" myVar = document.getElementById('STARTHOUR').value;\n";      
+  ptr +=" myVar = document.getElementById('STARTHOUR').value;\n";
   ptr +="}\n";
   ptr +="if(config == 6){\n";
-  ptr +=" myVar = document.getElementById('CYCLEAMOUNT').value;\n";     
+  ptr +=" myVar = document.getElementById('CYCLEAMOUNT').value;\n";
   ptr +="}\n";
   ptr +="if(config == 7){\n";
-  ptr +=" myVar = document.getElementById('CORRECTIONFACTOR').value;\n";     
-  ptr +="}\n";  
+  ptr +=" myVar = document.getElementById('CORRECTIONFACTOR').value;\n";
+  ptr +="}\n";
   ptr +="var xhttp = new XMLHttpRequest();\n";
   ptr +="  xhttp.onreadystatechange = function(){\n";
   ptr +="    if (this.readyState == 4 && this.status == 200 && config == 1){\n";
@@ -2496,23 +2499,23 @@ String SendConfigHTML(){
   ptr +="    if (this.readyState == 4 && this.status == 200 && config == 2){\n";
   ptr +="        document.getElementById('config2').innerHTML = this.responseText;\n";
   ptr +="      }\n";
-  ptr +="    if (this.readyState == 4 && this.status == 200 && config == 3){\n"; 
+  ptr +="    if (this.readyState == 4 && this.status == 200 && config == 3){\n";
   ptr +="        document.getElementById('config3').innerHTML = this.responseText;\n";
   ptr +="      }\n";
-  ptr +="    if (this.readyState == 4 && this.status == 200 && config == 4){\n"; 
+  ptr +="    if (this.readyState == 4 && this.status == 200 && config == 4){\n";
   ptr +="        document.getElementById('config4').innerHTML = this.responseText;\n";
   ptr +="      }\n";
   ptr +="    if (this.readyState == 4 && this.status == 200 && config == 5){\n";
   ptr +="        document.getElementById('config5').innerHTML = this.responseText;\n";
   ptr +="      }\n";
-  ptr +="    if (this.readyState == 4 && this.status == 200 && config == 6){\n"; 
+  ptr +="    if (this.readyState == 4 && this.status == 200 && config == 6){\n";
   ptr +="        document.getElementById('config6').innerHTML = this.responseText;\n";
   ptr +="      }\n";
-  ptr +="    if (this.readyState == 4 && this.status == 200 && config == 7){\n"; 
+  ptr +="    if (this.readyState == 4 && this.status == 200 && config == 7){\n";
   ptr +="        document.getElementById('config7').innerHTML = this.responseText;\n";
   ptr +="      }\n";
-  ptr +="}\n";  
-  ptr +="xhttp.open('GET', 'setConfiguration?setConfiguration='+config+'&value='+myVar, true);\n"; 
+  ptr +="}\n";
+  ptr +="xhttp.open('GET', 'setConfiguration?setConfiguration='+config+'&value='+myVar, true);\n";
   ptr +="xhttp.send();\n";
   ptr +="}\n";
   //Button Script
@@ -2529,7 +2532,7 @@ String SendConfigHTML(){
   ptr +="        document.getElementById('value5').innerHTML = parsedData.value5;\n";
   ptr +="        document.getElementById('value6').innerHTML = parsedData.value6;\n";
   ptr +="        document.getElementById('value7').innerHTML = parsedData.value7;\n";
-  ptr +="        document.getElementById('value8').innerHTML = parsedData.value8;\n";  
+  ptr +="        document.getElementById('value8').innerHTML = parsedData.value8;\n";
   ptr +="        document.getElementById('value9').innerHTML = parsedData.value9;\n";
   ptr +="        document.getElementById('value10').innerHTML = parsedData.value10;\n";
   ptr +="      }\n";
@@ -2550,12 +2553,12 @@ String SendConfigHTML(){
   ptr +=" registered.<br>Sensor 1 WaterIN: <span id='WaterIN'>\n";
   ptr +=GetAddressToString(EEPROM_VALUES.sensor1);
   ptr +="</span><br>Sensor 2 WaterOUT: <span id='WaterOUT'>\n";
-  ptr +=GetAddressToString(EEPROM_VALUES.sensor2);  
+  ptr +=GetAddressToString(EEPROM_VALUES.sensor2);
 
   ptr +="</span><br>\n";
   ptr +="<button type='button' onclick='ScanSensors()'>Check for Sensors</button>\n";
-  ptr +="<br>\n";  
-  ptr +="<span id='ResultScanSensors'>Only Sensors which are conected on Port 15 will be scanned!. <br>Here will the th search info!</span>\n"; 
+  ptr +="<br>\n";
+  ptr +="<span id='ResultScanSensors'>Only Sensors which are conected on Port 15 will be scanned!. <br>Here will the th search info!</span>\n";
   //ptr +="Sensors found:\n";
   //ptr +="Register:\n";
   ptr +="<br>\n";
@@ -2586,8 +2589,8 @@ String SendConfigHTML(){
 //  ptr +="alert ('Eine Auswahl treffen');\n";
 //  ptr +="return false; }\n";
 //  ptr +="else  {  \n";
-  
-  
+
+
   ptr +="  var objSelectWATER = document.getElementById('WATER').value;\n";
   ptr +="  var objSelectSENSOR = document.getElementById('SENSOR').value;\n";
 
@@ -2595,14 +2598,14 @@ String SendConfigHTML(){
 //  ptr +="alert ('You must choose an value!');\n";
 //  //ptr +="return false; }\n";
 //  ptr +="}\n";
-  
+
   ptr +="  var xhttp = new XMLHttpRequest();\n";
   ptr +="  xhttp.onreadystatechange = function(){\n";
   ptr +="    if (this.readyState == 4 && this.status == 200){\n";
   ptr +="        var parsedData = JSON.parse(this.responseText);\n";
   ptr +="        console.log(JSON.stringify(this.responseText));\n";
   ptr +="        document.getElementById('WaterIN').innerHTML = parsedData.WaterIN;\n";
-  ptr +="        document.getElementById('WaterOUT').innerHTML = parsedData.WaterOUT;\n"; 
+  ptr +="        document.getElementById('WaterOUT').innerHTML = parsedData.WaterOUT;\n";
   ptr +="      }\n";
   ptr +="  };\n";
   ptr +="xhttp.open('GET', 'SaveSensors?WATER='+objSelectWATER+'&SENSOR='+objSelectSENSOR, true);\n";
@@ -2642,7 +2645,7 @@ String SendConfigHTML(){
   ptr +="</script>\n";
   ptr +="<hr>\n";
 
-  //Check Reset Click and switch LED ON/OFF 
+  //Check Reset Click and switch LED ON/OFF
   ptr +="<button type='button' onclick='Reset(1)'>Reset Pump Runtime</button>\n";
   ptr +="<button type='button' onclick='Reset(2)'>Reset Light Runtime</button>\n";
   ptr +="<script>\n";
@@ -2687,9 +2690,9 @@ String SendIndexHTML(){
              "<table align='center'>\n"/*Start to create the html table*/\
              "<thead>\n"/*Zeile 1 Überschrift*/\
              "<tr>\n"/*Zeile 1 Überschrift*/\
-             "<th scope='col'>Outside Temerature</th>\n"\  
+             "<th scope='col'>Outside Temerature</th>\n"\
              "<th scope='col'>Outside Humidity</th>\n"\
-             "<th scope='col'>Outside Pressure</th>\n"\  
+             "<th scope='col'>Outside Pressure</th>\n"\
              "</tr></thead>\n"\
              "<tbody>\n"\
              "<tr>\n"/*Zeile 1*/\
@@ -2716,7 +2719,7 @@ String SendImpressumHTML(){
               "eine Online-Plattform ('OS-Plattform') eingerichtet, an die Sie sich wenden können. Die Plattform \n"\
               "finden Sie unter <a href='http://ec.europa.eu/consumers/odr/'>http://ec.europa.eu/consumers/odr/</a>. \n"\
               "Unsere Emailadresse lautet: ich@mail.de<br /><br /><br />\n";
-  
+
   return ptr;
 }
 String SendDatenschutzHTML(){
@@ -2733,7 +2736,7 @@ String SendDisclaimerHTML(){
               "Diese Website enth�lt Verkn�pfungen zu Websites Dritter ('externe Links'). Diese Websites unterliegen der Haftung der jeweiligen Betreiber. Der Anbieter hat bei der erstmaligen Verkn�pfung der externen Links die fremden Inhalte daraufhin �berpr�ft, ob etwaige Rechtsverst��e bestehen. Zu dem Zeitpunkt waren keine Rechtsverst��e ersichtlich. Der Anbieter hat keinerlei Einfluss auf die aktuelle und zuk�nftige Gestaltung und auf die Inhalte der verkn�pften Seiten. Das Setzen von externen Links bedeutet nicht, dass sich der Anbieter die hinter dem Verweis oder Link liegenden Inhalte zu Eigen macht. Eine st�ndige Kontrolle der externen Links ist f�r den Anbieter ohne konkrete Hinweise auf Rechtsverst��e nicht zumutbar. Bei Kenntnis von Rechtsverst��en werden jedoch derartige externe Links unverz�glich gel�scht.</br>\n" \
               "<br />\n" \
               "3 Urheber- und Leistungsschutzrechte</br>\n" \
-  
+
               "Die auf dieser Website ver�ffentlichten Inhalte unterliegen dem deutschen Urheber- und Leistungsschutzrecht. Jede vom deutschen Urheber- und Leistungsschutzrecht nicht zugelassene Verwertung bedarf der vorherigen schriftlichen Zustimmung des Anbieters oder jeweiligen Rechteinhabers. Dies gilt insbesondere f�r Vervielf�ltigung, Bearbeitung, �bersetzung, Einspeicherung, Verarbeitung bzw. Wiedergabe von Inhalten in Datenbanken oder anderen elektronischen Medien und Systemen. Inhalte und Rechte Dritter sind dabei als solche gekennzeichnet. Die unerlaubte Vervielf�ltigung oder Weitergabe einzelner Inhalte oder kompletter Seiten ist nicht gestattet und strafbar. Lediglich die Herstellung von Kopien und Downloads f�r den pers�nlichen, privaten und nicht kommerziellen Gebrauch ist erlaubt.</br>\n" \
               "</br>\n" \
               "Die Darstellung dieser Website in fremden Frames ist nur mit schriftlicher Erlaubnis zul�ssig.</br>\n" \
@@ -2742,7 +2745,7 @@ String SendDisclaimerHTML(){
               "Soweit besondere Bedingungen f�r einzelne Nutzungen dieser Website von den vorgenannten Paragraphen abweichen, wird an entsprechender Stelle ausdr�cklich darauf hingewiesen. In diesem Falle gelten im jeweiligen Einzelfall die besonderen Nutzungsbedingungen.Quelle: <a href='http://www.experten-branchenbuch.de/'>Experten-Branchenbuch</a>\n";
 
   return ptr;
-}  
+}
 
 String SenduploadHTML(){
 String ptr ="<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>\n"\
@@ -2786,7 +2789,7 @@ String ptr ="<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jqu
           "Generate a .bin file in Arduino IDE<br>\n"\
           "Save your sketch before!<br>\n"\
           "To generate a .bin file from your sketch, go to Sketch > Export compiled Binary\n"\
-          "A new file on the folder sketch should be created.\n"\ 
+          "A new file on the folder sketch should be created.\n"\
           "You can verify by going to the folder: Go to Sketch > Show Sketch Folder.<br>\n"\
           "You should have two files in your Sketch folder: the .ino and the .bin file.<br>\n"\
           "You should upload the .bin file using the OTA Web Updater.<br><br>\n"\
