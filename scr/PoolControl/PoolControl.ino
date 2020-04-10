@@ -50,11 +50,13 @@
 /* Sensor measurement in each loop - Done  V0.6                                    */
 /* Correction if 24h is activated  - Done  V0.6                                    */
 /* EEPROM Saving does not work - desactivated                                      */
+/* V0.7                                                                            */
+/* Quality of reception of the WiFi Signal                                         */
 
 /* V0.x */
-/* WiFi Manager - Done  V0.2
-/* Quality of reception of WiFi Signal */
-/* Implement EMONCS for Monitoring */
+/* WiFi Manager - Done  V0.2                                                       */
+/* Quality of reception of WiFi Signal                                             */
+/* Implement EMONCS for Monitoring                                                 */
 /* Power Management (Measure Current on Pump & PAC Phase and monitor over EMONCS)  */                                                   */
 /* Pressure Control for Filter                                                     */
 /* PH Measurement                                                                  */
@@ -89,7 +91,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.05.15";//SW Revision
+char rev[] = "V0.07.00";//SW Revision
 
 //#define DEBUG
 
@@ -107,6 +109,7 @@ const char* ssid = "Freebox_AFFF90";
 const char* password = "delphinedaniel";
 int wifi_retry = 0;
 int iesp_restart = 0;
+long rssi;
 
 WebServer server(80);
 
@@ -249,9 +252,9 @@ int numberOfDevices; // Number of temperature devices found
 //BME280
 #define SEALEVELPRESSURE_HPA (1013.25)
 Adafruit_BME280 bme; // I2C
-/*---------------------------*/
-/*-handleNewMessages         */
-/*---------------------------*/
+//***********************************************
+//-handleNewMessages
+//***********************************************
 void handleNewMessages(int numNewMessages) {
   DEBUG_PRINTLN("handleNewMessages");
   DEBUG_PRINT("numNewMessages: ");
@@ -359,6 +362,8 @@ void handleNewMessages(int numNewMessages) {
       if (text == "/Hostname") {
         String message = "The actual Hostname is:\n";
         message += WiFi.getHostname();
+        message += "The WiFi strenght is:\n";
+        message += rssi;
         bot->sendMessage(chat_id, message, "Markdown");
         valid = true;
       }
@@ -464,11 +469,9 @@ void handleNewMessages(int numNewMessages) {
     }
   }
 }
-
-/*---------------------------*/
-/*-GetAddressToString        */
-/*---------------------------*/
-//Convert device id to String
+//***********************************************
+//GetAddressToString (Convert device id to String)
+//***********************************************
 String GetAddressToString(DeviceAddress deviceAddress){
   String str = "";
   for (uint8_t i = 0; i < 8; i++){
@@ -477,25 +480,25 @@ String GetAddressToString(DeviceAddress deviceAddress){
     }
     return str;
 }
-/*---------------------------*/
-/*-CmInMeter                 */
-/*---------------------------*/
+//***********************************************
+//-CmInMeter
+//***********************************************
 float CmInMeter(int value) {
   float freturn = 0;
   freturn = value / 100;
   return freturn;
 }
-/*---------------------------*/
-/*-MeterInCm                 */
-/*---------------------------*/
+//***********************************************
+//-MeterInCm
+//***********************************************
 int MeterInCm(float value) {
   int ireturn = 0;
   ireturn = value * 100;
   return ireturn;
 }
-/*---------------------------*/
-/*-PoolCalculations          */
-/*---------------------------*/
+//***********************************************
+//-PoolCalculations
+//***********************************************
 void PoolCalculations(void) {
   DEBUG_PRINTLN("-----------------------------------------");
   DEBUG_PRINTLN("Input Values for Pool Calculation ");
@@ -594,12 +597,11 @@ void PoolCalculations(void) {
   DEBUG_PRINT("EEPROM_VALUES.iCORRECTION_FACTOR: ");
   DEBUG_PRINTLN(EEPROM_VALUES.iCORRECTION_FACTOR);
 
-}//end of PoolCalculations
+}
 #define POLY 0x82f63b78
-/*---------------------------*/
-/*-calcCrc                   */
-/*---------------------------*/
-//read eeprom structure from eeprom
+//***********************************************
+//-calcCrc (read eeprom structure from eeprom)
+//***********************************************
 uint32_t calcCrc(uint8_t *bytes, uint32_t size) {
     uint32_t crc = 0;
     crc = ~crc;
@@ -937,6 +939,9 @@ void setup() {
   WiFi.setHostname(wiFiHostname);
   DEBUG_PRINTLN("");
   DEBUG_PRINTLN("WiFi connected");
+  rssi = WiFi.RSSI();
+  DEBUG_PRINT("RSSI:");
+  DEBUG_PRINTLN(rssi);
 
 /*
   WiFiManager wifiManager;
@@ -1049,6 +1054,7 @@ void loop() {
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
     delay(100);
+    rssi = WiFi.RSSI();
   }
   if(wifi_retry >=5) {
     wifi_retry = 0;
@@ -1136,10 +1142,10 @@ void loop() {
     Bot_lasttime = millis();
   }//end of if(millis() > Bot_lasttime + Bot_mtbs)
 
-}//end of loop
-/******************************************************************************/
+}
+//***********************************************
 /*Interrupts*/
-/******************************************************************************/
+//***********************************************
 void ISR_SUMMERWINTER_STATUS() {
   unsigned long interrupt_time = millis();//Bouncing check
   //If interrupts come faster than Bouncing, assume it's a bounce and ignore
@@ -1164,7 +1170,6 @@ void ISR_PUMP_STATUS() {
   }
   oldTimePump = interrupt_time;
 }
-
 void ISR_LIGHT_STATUS() {
   unsigned long interrupt_time = millis();//Bouncing check
   //If interrupts come faster than Bouncing, assume it's a bounce and ignore
@@ -1177,7 +1182,6 @@ void ISR_LIGHT_STATUS() {
   }
   oldTimeLight = interrupt_time;
 }
-
 void ISR_PAC_STATUS() {
   unsigned long interrupt_time = millis();//Bouncing check
   //If interrupts come faster than Bouncing, assume it's a bounce and ignore
@@ -1189,10 +1193,10 @@ void ISR_PAC_STATUS() {
     }
   }
   oldTimePAC = interrupt_time;
-}//end of Interrupts
-/******************************************************************************/
+}
+//***********************************************
 /*ALARM*/
-/******************************************************************************/
+//***********************************************
 void Alarm(void) {
 /*
   DEBUG_PRINT("iSTART_HOURS[iACTUAL_CYCLE]:");
@@ -1219,10 +1223,10 @@ void Alarm(void) {
       iACTUAL_CYCLE = 1;
     }
   }
-}//end of Alarm
-/*---------------------------*/
-/*-lokale Zeit               */
-/*---------------------------*/
+}
+//***********************************************
+//lokale Zeit
+//***********************************************
 void lokaleZeit() {
   time_t tT = now();
   time_t tTlocal = CE.toLocal(tT);
@@ -1233,10 +1237,10 @@ void lokaleZeit() {
   h = hour(tTlocal);
   m = minute(tTlocal);
   s = second(tTlocal);
-}//end of lokaleZeit
-/*---------------------------*/
-/*-digitalClockDisplay       */
-/*---------------------------*/
+}
+//***********************************************
+//digitalClockDisplay
+//***********************************************
 void digitalClockDisplay() {
   // digitale Uhrzeitanzeige
   DEBUG_PRINT(h);
@@ -1251,28 +1255,31 @@ void digitalClockDisplay() {
   DEBUG_PRINT(".");
   DEBUG_PRINTLN(ye);
   delay(1000);
-}//end of digitalClockDisplay
-/*---------------------------*/
-/*-printDigits               */
-/*---------------------------*/
+}
+//***********************************************
+//printDigits
+//***********************************************
 void printDigits(int digits) {
   if (digits < 10)
     DEBUG_PRINT('0');
   DEBUG_PRINT(digits);
 }
-/*= = = = = = = = = = handle_ONConnect = = = = = = = = = = */
+//***********************************************
+//WebServer CONTROL
+//***********************************************
+/*= handle_ONConnect =*/
 void handle_OnConnect() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendHTML());
 }
-/*= = = = = = = = = = handle_INDEX = = = = = = = = = = */
+/*= handle_INDEX =*/
 void handle_INDEX(){
   DEBUG_PRINTLN("handle_INDEX");
   //server.send(200, "text/html", SendHTML());
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendIndexHTML());
 }
-/*= = = = = = = = = = handle_SUMMERWINTER = = = = = = = = = = */
+/*= handle_SUMMERWINTER =*/
 void handle_SUMMERWINTER() {
   RELAIS_STATUS.iSUMMERWINTER_STATUS = !RELAIS_STATUS.iSUMMERWINTER_STATUS;
   DEBUG_PRINT("iSUMMERWINTER_STATUS: ");
@@ -1280,7 +1287,7 @@ void handle_SUMMERWINTER() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendHTML());
 }
-/*= = = = = = = = = = handle_PUMP_STATUS = = = = = = = = = = */
+/*= handle_PUMP_STATUS =*/
 void handle_PUMP_STATUS() {
   RELAIS_STATUS.iPumpStatus = !RELAIS_STATUS.iPumpStatus;
   DEBUG_PRINT("iPumpStatus:");
@@ -1288,7 +1295,7 @@ void handle_PUMP_STATUS() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendHTML());
 }
-/*= = = = = = = = = = handle_LIGHT_STATUS = = = = = = = = = = */
+/*= handle_LIGHT_STATUS =*/
 void handle_LIGHT_STATUS() {
   RELAIS_STATUS.iLIGHT_STATUS = !RELAIS_STATUS.iLIGHT_STATUS;
   DEBUG_PRINT("iLIGHT_STATUS:");
@@ -1296,7 +1303,7 @@ void handle_LIGHT_STATUS() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendHTML());
 }
-/*= = = = = = = = = = handle_PAC_STATUS = = = = = = = = = = */
+/*= handle_PAC_STATUS =*/
 void handle_PAC_STATUS() {
   RELAIS_STATUS.iPAC_STATUS = !RELAIS_STATUS.iPAC_STATUS;
   DEBUG_PRINT("iPAC_STATUS:");
@@ -1304,7 +1311,7 @@ void handle_PAC_STATUS() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendHTML());
 }
-/*= = = = = = = = = = handle_Button = = = = = = = = = = */
+/*= handle_Button =*/
 void handle_Button() {
   String ledState;
   String t_state = server.arg("setButton");
@@ -1366,7 +1373,7 @@ void handle_Button() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", ledState);
 }
-/*= = = = = = = = = = handle_LED = = = = = = = = = = */
+/*= handle_LED =*/
 void handle_LED(){
     String updated_info;
     updated_info = "{\"value1\":\"";
@@ -1417,7 +1424,7 @@ void handle_LED(){
     server.sendHeader("Connection", "close");
     server.send(200, "text/html", updated_info);
 }
-/*= = = = = = = = = = handle_GAUGES = = = = = = = = = = */
+/*= handle_GAUGES =*/
 void handle_GAUGES(){
   String updated_info;
   String t_state = server.arg("GAUGEState");
@@ -1460,13 +1467,13 @@ void handle_GAUGES(){
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", updated_info);
 }
-/*= = = = = = = = = = handle_Config = = = = = = = = = = */
+/*= handle_Config =*/
 void handle_Config() {
   DEBUG_PRINTLN("handle_Config");
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendConfigHTML());
 }
-/*= = = = = = = = = = handle_Configuration = = = = = = = = = = */
+/*= handle_Configuration =*/
 void handle_Configuration(){
   int s, v;
   String Value;
@@ -1515,7 +1522,7 @@ void handle_Configuration(){
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", t_value);
 }
-/*= = = = = = = = = = handle_Configuration_Values = = = = = = = = = = */
+/*= handle_Configuration_Values =*/
 void handle_Configuration_Values(){
   int s;
   String Value;
@@ -1574,7 +1581,7 @@ void handle_Configuration_Values(){
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", Value);
 }
-/*= = = = = = = = handle_ScanSensors = = = = = = = = */
+/*= handle_ScanSensors =*/
 void handle_ScanSensors(){
   DEBUG_PRINTLN("ScanSensors");//Debug Info
   String updated_info;
@@ -1615,7 +1622,7 @@ void handle_ScanSensors(){
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", updated_info);
 }
-/*= = = = = = = = handle_SaveSensors = = = = = = = = */
+/*= handle_SaveSensors =*/
 void handle_SaveSensors(){
   DEBUG_PRINTLN("SaveSensors");//Debug Info
   String updated_info;
@@ -1689,7 +1696,7 @@ DEBUG_PRINTLN("•••••••••••••••••••••�
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", updated_info);
 }
-/*= = = = = = = = handle_TEMPERATUREPRECISION = = = = = = = = */
+/*= handle_TEMPERATUREPRECISION =*/
 void handle_TempPreci(){
   DEBUG_PRINTLN("TempPreci");//Debug Info
   int s;
@@ -1717,7 +1724,7 @@ void handle_TempPreci(){
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", updated_info);
 }
-/*= = = = = = = = handle_Reset_Values = = = = = = = = */
+/*= handle_Reset_Values =*/
 void handle_Reset_Values(){
   DEBUG_PRINT("Reset_Values");//Debug Info
   int s;
@@ -1748,29 +1755,28 @@ void handle_Reset_Values(){
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", Value);
 }
-
-/*= = = = = = = = = = handle_Impressum = = = = = = = = = = */
+/*= handle_Impressum =*/
 void handle_Impressum() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendImpressumHTML());
 }
-/*= = = = = = = = = = handle_Datenschutz = = = = = = = = = = */
+/*= handle_Datenschutz =*/
 void handle_Datenschutz() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendDatenschutzHTML());
 }
-/*= = = = = = = = = = handle_Disclaimer = = = = = = = = = = */
+/*= handle_Disclaimer =*/
 void handle_Disclaimer() {
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SendDisclaimerHTML());
 }
-/*= = = = = = = = = = handle_upload = = = = = = = = = = */
+/*= handle_upload =*/
 void handle_upload(){
   DEBUG_PRINT("handle_upload");
   server.sendHeader("Connection", "close");
   server.send(200, "text/html", SenduploadHTML());
 }
-/*= = = = = = = = = = handleWebRequests = = = = = = = = = = */
+/*= handleWebRequests =*/
 void handleWebRequests(){
   if(loadFromSpiffs(server.uri())) return;
   String message = "File Not Detected\n\n";
@@ -1788,6 +1794,7 @@ void handleWebRequests(){
   server.send(404, "text/plain", message);
   DEBUG_PRINTLN(message);
 }
+
 bool loadFromSpiffs(String path){
   String dataType = "text/plain";
   if(path.endsWith("/")) path += "index.htm";
@@ -2227,7 +2234,9 @@ String SendHTML(){
   ptr +="</div>\n";
   ptr +="<div class='fussbox-1b'><span class='fussname'>&copy;2019 | Pool - Control<br>Version: \n";
   ptr +=rev;
-  ptr +="</span></div>\n";
+  ptr +="WLAN Signal Staerke: \n";
+  ptr +=rssi;
+  ptr +="dBm</span></div>\n";
   ptr +="</div>\n";
   ptr +="</div>\n";
   ptr +="</div>\n";
@@ -2236,7 +2245,6 @@ String SendHTML(){
   ptr +="</html>\n";
   return ptr;
 }
-
 String SendConfigHTML(){
   String ptr =" ";
   //LEFT CONTENT
@@ -2703,7 +2711,6 @@ String SendIndexHTML(){
              "</tr></tbody></table>\n";
  return ptr;
 }
-
 String SendImpressumHTML(){
   String ptr ="<h1>Impressum</h1>\n"\
               "<p>Daniel Kettnaker<br/>\n"\
@@ -2726,7 +2733,6 @@ String SendDatenschutzHTML(){
   String ptr ="<h1>Datenschutzerklärung</h1>\n";
   return ptr;
 }
-
 String SendDisclaimerHTML(){
   String ptr ="<h1>Disclaimer - rechtliche Hinweise</h1>\n" \
               "1 Warnhinweis zu Inhalten</br>\n" \
@@ -2746,7 +2752,6 @@ String SendDisclaimerHTML(){
 
   return ptr;
 }
-
 String SenduploadHTML(){
 String ptr ="<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>\n"\
          "<form method='POST' action='#' enctype='multipart/form-data' id='upload_form'>\n"\
@@ -2807,8 +2812,7 @@ return ptr;
 const int NTP_PACKET_SIZE = 48; // NTP-Zeit in den ersten 48 Bytes der Nachricht
 byte packetBuffer[NTP_PACKET_SIZE]; //Puffer für eingehende und ausgehende Pakete
 
-time_t getNtpTime()
-{
+time_t getNtpTime(){
   IPAddress ntpServerIP; // NTP server's ip Adresse
 
   while (Udp.parsePacket() > 0) ; // alle zuvor empfangenen Pakete verwerfen
@@ -2840,9 +2844,7 @@ time_t getNtpTime()
   return 0; // gibt 0 zurück, wenn die Zeit nicht ermittelt werden kann.
 }
 
-// send an NTP request to the time server at the given address
-void sendNTPpacket(IPAddress &address)
-{
+void sendNTPpacket(IPAddress &address){// send an NTP request to the time server at the given address
   // alle Bytes im Puffer auf 0 setzen
   memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialisieren von Werten, die für die Bildung von NTP-Requests benötigt werden.
