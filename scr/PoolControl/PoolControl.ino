@@ -4,8 +4,8 @@
 /* The amount of cycles can be defined, and also the starting time.                */
 /*                                                                                 */
 /* Description of the Revision                                                     */
-/* VX.XX.XX";//SW Revision                                                        */
-/* V=Version X.Subersions XX loops X. XX=reserve                                   */                                             */
+/* VX.XX.XX";  SW Revision                                                         */
+/* V=Version X.Subersions XX loops X. XX=reserve                                   */
 /*                                                                                 */
 /*                                                                                 */
 /*                                                                                 */
@@ -57,7 +57,7 @@
 /* WiFi Manager - Done  V0.2                                                       */
 /* Quality of reception of WiFi Signal                                             */
 /* Implement EMONCS for Monitoring                                                 */
-/* Power Management (Measure Current on Pump & PAC Phase and monitor over EMONCS)  */                                                   */
+/* Power Management (Measure Current on Pump & PAC Phase and monitor over EMONCS)  */
 /* Pressure Control for Filter                                                     */
 /* PH Measurement                                                                  */
 /* Redox Measurement                                                               */
@@ -65,13 +65,9 @@
 /* Level detector in the skimmer                                                   */
 /* RF Control for the opening and closing of the terasse                           */
 
-/*                                                                                 */
+/* Arduino Board: ESP32 Dev Modul                                                  */
 /* by Daniel Kettnaker  2019                                                       */
 /***********************************************************************************/
-/*
- * ESP8266 SPIFFS HTML Web Page with JPEG, PNG Image
- *
- */
 
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
