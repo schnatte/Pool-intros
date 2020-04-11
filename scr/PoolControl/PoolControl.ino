@@ -92,7 +92,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.07.01";//SW Revision
+char rev[] = "V0.07.02";//SW Revision
 
 //#define DEBUG
 
@@ -460,7 +460,7 @@ void handleNewMessages(int numNewMessages) {
         welcome += "/PACOn : to switch ON\n";
         welcome += "/PACOff : to switch OFF\n";
         welcome += "/IPAdress : returns the IP Adress\n";
-        welcome += "/Hostname : returns the Hostname\n";
+        welcome += "/Hostname : returns the Hostname and the Wifi strenth\n";
         welcome += "/status : Returns current status \n";
         welcome += "/options : returns the reply keyboard\n";
         bot->sendMessage(chat_id, welcome, "Markdown");
@@ -1043,6 +1043,8 @@ void setup() {
   DEBUG_PRINTLN(iSTOP_HOURS[iACTUAL_CYCLE]);
   DEBUG_PRINT("iACTUAL_CYCLE:");
   DEBUG_PRINTLN(iACTUAL_CYCLE);
+
+  bot->sendMessage("475180895", "Setup/Restart done","");
 }
 //***********************************************
 //MAIN LOOP
