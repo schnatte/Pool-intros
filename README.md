@@ -11,7 +11,7 @@ A distance control can be done over telegram
 - [x] Light Control ON/OFF
 - [x] Telegram for Information and action
 - [x] OTA WebUpdater
-- [ ] Quality of reception of WiFi Signal
+- [x] Quality of reception of WiFi Signal
 - [ ] Pressure Control for Filter
 - [ ] PH Measurement
 - [ ] Redox Measurement
