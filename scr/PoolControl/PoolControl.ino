@@ -52,10 +52,11 @@
 /* EEPROM Saving does not work - desactivated                                      */
 /* V0.7                                                                            */
 /* Quality of reception of the WiFi Signal                                         */
+/* V0.8                                                                            */
+
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
-/* Quality of reception of WiFi Signal                                             */
 /* Implement EMONCS for Monitoring                                                 */
 /* Power Management (Measure Current on Pump & PAC Phase and monitor over EMONCS)  */
 /* Pressure Control for Filter                                                     */
@@ -64,11 +65,15 @@
 /* PH & Redox analysis and graph                                                   */
 /* Level detector in the skimmer                                                   */
 /* RF Control for the opening and closing of the terasse                           */
+/* Implement EMONCS for Monitoring                                                 */
 
 /* Arduino Board: ESP32 Dev Modul                                                  */
 /* by Daniel Kettnaker  2019                                                       */
 /***********************************************************************************/
 
+/***********************************************************/
+/*Function Declarations                                    */
+/***********************************************************/
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <WebServer.h>
@@ -87,7 +92,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.07.00";//SW Revision
+char rev[] = "V0.07.01";//SW Revision
 
 //#define DEBUG
 
@@ -109,7 +114,9 @@ long rssi;
 
 WebServer server(80);
 
-// Initialize Telegram BOT
+/***********************************************************/
+/*Telegram Account                                         */
+/***********************************************************/
 String BOTtoken;
 String approved_chat_id;
 WiFiClientSecure client;
@@ -118,6 +125,7 @@ int Bot_mtbs = 1000; //mean time between scan messages
 long Bot_lasttime;   //last time messages' scan has been done
 long timecount;
 
+//Timing CONTROL
 void Alarm(void);
 void digitalClockDisplay();
 void printDigits(int digits);
@@ -248,6 +256,7 @@ int numberOfDevices; // Number of temperature devices found
 //BME280
 #define SEALEVELPRESSURE_HPA (1013.25)
 Adafruit_BME280 bme; // I2C
+
 //***********************************************
 //-handleNewMessages
 //***********************************************
@@ -2230,7 +2239,7 @@ String SendHTML(){
   ptr +="</div>\n";
   ptr +="<div class='fussbox-1b'><span class='fussname'>&copy;2019 | Pool - Control<br>Version: \n";
   ptr +=rev;
-  ptr +="WLAN Signal Staerke: \n";
+  ptr +="<p>WLAN Signal Staerke: \n";
   ptr +=rssi;
   ptr +="dBm</span></div>\n";
   ptr +="</div>\n";
