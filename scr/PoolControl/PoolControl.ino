@@ -92,16 +92,18 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.07.02";//SW Revision
+char rev[] = "V0.07.12";//SW Revision
 
 //#define DEBUG
 
 #ifdef DEBUG
   #define DEBUG_PRINT(x) Serial.print(x)
   #define DEBUG_PRINTLN(x) Serial.println(x)
+  #define DEBUG 1
 #else
   #define DEBUG_PRINT(x)
   #define DEBUG_PRINTLN(x)
+  #define DEBUG 0
 #endif
 
 // WiFi connection
@@ -118,7 +120,8 @@ WebServer server(80);
 /*Telegram Account                                         */
 /***********************************************************/
 String BOTtoken;
-String approved_chat_id;
+//String BOTtoken = "652814945:AAEUi9_m3vS4vIOqa5_ufKgDxZ1MMYm0R5g";
+String approved_chat_id_1, approved_chat_id_2;
 WiFiClientSecure client;
 UniversalTelegramBot *bot;
 int Bot_mtbs = 1000; //mean time between scan messages
@@ -277,7 +280,7 @@ void handleNewMessages(int numNewMessages) {
     DEBUG_PRINT("text: ");
     DEBUG_PRINTLN(text);
 
-    if(chat_id == approved_chat_id){
+    if(chat_id == approved_chat_id_1 || approved_chat_id_2){
       if (text == "/SummerWinterOn") {
         if(RELAIS_STATUS.iSUMMERWINTER_STATUS == 1){
           bot->sendMessage(chat_id, "SummerWinter was already ON", "");
@@ -441,13 +444,11 @@ void handleNewMessages(int numNewMessages) {
         bot->sendMessage(chat_id, message, "Markdown");
         valid = true;
       }
-
       if (text == "/options") {
         String keyboardJson = "[[\"/SummerWinterOn\", \"/SummerWinterOff\"],[\"/PumpOn\", \"/PumpOff\"],[\"/LightOn\", \"/LightOff\"],[\"/PACOn\", \"/PACOff\"],[\"/IPAdress\", \"/Hostname\"],[\"/status\", \"/start\"]]";
         bot->sendMessageWithReplyKeyboard(chat_id, "Choose from one of the following options", "", keyboardJson, true);
         valid = true;
       }
-
       if (text == "/start") {
         String welcome = "Welcome to Pool Control, " + from_name + ".\n";
         welcome += "You have the following possibilities:\n\n";
@@ -621,6 +622,9 @@ uint32_t calcCrc(uint8_t *bytes, uint32_t size) {
 //SETUP
 //***********************************************
 void setup() {
+  if(DEBUG == 1){
+      strcat (rev, "-D");
+  }
   //Take default values
   RELAIS_STATUS.iSUMMERWINTER_STATUS = 0; //1 = Sommer 0 = Winter
   RELAIS_STATUS.iPumpStatus = 1; //0 = ON, 1 = OFF
@@ -631,8 +635,8 @@ void setup() {
   Serial.begin(115200);
   DEBUG_PRINTLN();
   DEBUG_PRINT("WELCOME TO THE POOL-CONTROL Version:");
-  DEBUG_PRINT(rev);
-  DEBUG_PRINTLN();
+  DEBUG_PRINTLN(rev);
+  DEBUG_PRINTLN("••••••••••••••••••••••");
 
   //PIN MODES DEFINE
   pinMode(LIGHT_RELAIS, OUTPUT); // set pin to output
@@ -672,7 +676,6 @@ void setup() {
   {
     DEBUG_PRINTLN("failed to initialise EEPROM"); delay(1000000);
   }
-
 //save:
 /*
   uint8_t *address = (uint8_t*)&EEPROM_VALUES;
@@ -688,19 +691,15 @@ void setup() {
   EEPROM.get(iAdr_Eeprom_Values, EEPROM_VALUES);
   DEBUG_PRINT("EEPROM_VALUES.crc: ");
   DEBUG_PRINTLN(EEPROM_VALUES.crc);
-  DEBUG_PRINTLN("••••••••••••••••••••••");
   DEBUG_PRINTLN("Check Sensors in EEPROM");
   DEBUG_PRINTLN("EEPROM_VALUES.sensor1: ");
   for(uint8_t i = 0; i < 8; i++){
     //DEBUG_PRINT(EEPROM_VALUES.sensor1[i], HEX);
   }
-  DEBUG_PRINTLN("");
   DEBUG_PRINTLN("EEPROM_VALUES.sensor2: ");
   for(uint8_t i = 0; i < 8; i++){
     //DEBUG_PRINT(EEPROM_VALUES.sensor2[i], HEX);
   }
-  DEBUG_PRINTLN("");
-  DEBUG_PRINTLN("••••••••••••••••••••••");
 
   //Check EEPROM Values for definitions
   bool valid = false;
@@ -842,7 +841,7 @@ void setup() {
   }else{
     DEBUG_PRINTLN("EEPROM Values for RELAIS_STATUS will be taken");
   }
-
+  DEBUG_PRINTLN("••••••••••••••••••••••");
   sensors.begin();//START one Wire Sensors
   //Grab a count of devices on the wire
   numberOfDevices = sensors.getDeviceCount();
@@ -871,66 +870,82 @@ void setup() {
   DEBUG_PRINT("Resolution for sensor2 actually set to: ");
   //DEBUG_PRINTLN(sensors.getResolution(EEPROM_VALUES.sensor2), DEC);
   DEBUG_PRINTLN();
-  if (bme.begin() == 0) {
-    DEBUG_PRINTLN("Could not find a valid BME280 sensor, check wiring!");
-    while (1);
+  DEBUG_PRINTLN("••••••••••••••••••••••");
+  if (DEBUG == 1) {
+    DEBUG_PRINTLN("BME280 sensor not active no wiring!");
+  }else{
+    if (bme.begin() == 0) {
+      DEBUG_PRINTLN("Could not find a valid BME280 sensor, check wiring!");
+      while (1);
+    }
+    //Print BME Values
+    fTempOut = bme.readTemperature();
+    fHumOut = bme.readHumidity();
+    fPresOut = bme.readPressure() / 100.0F;
+
+    DEBUG_PRINT("Temperature = ");
+    DEBUG_PRINT(fTempOut);
+    DEBUG_PRINTLN(" *C");
+
+    DEBUG_PRINT("Pressure = ");
+    DEBUG_PRINT(fPresOut);
+    DEBUG_PRINTLN(" hPa");
+
+    DEBUG_PRINT("Approx. Altitude = ");
+    DEBUG_PRINT(bme.readAltitude(SEALEVELPRESSURE_HPA));
+    DEBUG_PRINTLN(" m");
+
+    DEBUG_PRINT("Humidity = ");
+    DEBUG_PRINT(fHumOut);
+    DEBUG_PRINTLN(" %");
   }
-
-  //Print BME Values
-  fTempOut = bme.readTemperature();
-  fHumOut = bme.readHumidity();
-  fPresOut = bme.readPressure() / 100.0F;
-
-  DEBUG_PRINT("Temperature = ");
-  DEBUG_PRINT(fTempOut);
-  DEBUG_PRINTLN(" *C");
-
-  DEBUG_PRINT("Pressure = ");
-  DEBUG_PRINT(fPresOut);
-  DEBUG_PRINTLN(" hPa");
-
-  DEBUG_PRINT("Approx. Altitude = ");
-  DEBUG_PRINT(bme.readAltitude(SEALEVELPRESSURE_HPA));
-  DEBUG_PRINTLN(" m");
-
-  DEBUG_PRINT("Humidity = ");
-  DEBUG_PRINT(fHumOut);
-  DEBUG_PRINTLN(" %");
-
+  DEBUG_PRINTLN("••••••••••••••••••••••");
   PoolCalculations();//Calculate the values based on the pool size
-
+  DEBUG_PRINTLN("••••••••••••••••••••••");
   //Initialize File System
+  DEBUG_PRINTLN("Initialize File System");
   //SPIFFS.begin();
+  //bot = new UniversalTelegramBot(BOTtoken, client);
   if(!SPIFFS.begin(true)){
     DEBUG_PRINTLN("An Error has occurred while mounting SPIFFS");
+    //bot->sendMessage("475180895", "An Error has occurred while mounting SPIFFS","");
     return;
   }
   DEBUG_PRINTLN("File System Initialized");
+  //bot->sendMessage("475180895", "File System Initialized","");
   File file = SPIFFS.open("/telegram.txt");
   if(!file){
       DEBUG_PRINTLN("Failed to open file for reading");
+      //bot->sendMessage("475180895", "Failed to open file for reading","");
       return;
   }
-  DEBUG_PRINTLN("File Content:");
+  DEBUG_PRINTLN("File Content will be read");
   while(file.available()){
       BOTtoken=file.readStringUntil('\n');
       BOTtoken.trim();
-      approved_chat_id=file.readStringUntil('\n');
-      approved_chat_id.trim();
+      approved_chat_id_1=file.readStringUntil('\n');
+      approved_chat_id_1.trim();
+      approved_chat_id_2=file.readStringUntil('\n');
+      approved_chat_id_2.trim();
   }
   file.close();
+  DEBUG_PRINTLN("File Closed:");
   bot = new UniversalTelegramBot(BOTtoken, client);
-  DEBUG_PRINTLN("=====================================");
+  DEBUG_PRINT("BOTtoken: ");
   DEBUG_PRINTLN(BOTtoken);
+  DEBUG_PRINT("BOTtoken length : ");
   DEBUG_PRINTLN(BOTtoken.length());
-  DEBUG_PRINTLN("=====================================");
-  DEBUG_PRINTLN(approved_chat_id);
-  DEBUG_PRINTLN(approved_chat_id.length());
-  DEBUG_PRINTLN("=====================================");
-
+  DEBUG_PRINT("approved_chat_id_1: ");
+  DEBUG_PRINTLN(approved_chat_id_1);
+  DEBUG_PRINT("approved_chat_id_1 length: ");
+  DEBUG_PRINTLN(approved_chat_id_1.length());
+  DEBUG_PRINT("approved_chat_id_2: ");
+  DEBUG_PRINTLN(approved_chat_id_2);
+  DEBUG_PRINT("approved_chat_id_2 length: ");
+  DEBUG_PRINTLN(approved_chat_id_2.length());
 
   // Connect to WiFi network
-  DEBUG_PRINTLN();
+  DEBUG_PRINTLN("••••••••••••••••••••••");
   DEBUG_PRINT("Connecting to ");
   DEBUG_PRINTLN(ssid);
 
@@ -947,6 +962,7 @@ void setup() {
   rssi = WiFi.RSSI();
   DEBUG_PRINT("RSSI:");
   DEBUG_PRINTLN(rssi);
+  DEBUG_PRINTLN("••••••••••••••••••••••");
 
 /*
   WiFiManager wifiManager;
@@ -1016,22 +1032,23 @@ void setup() {
   setSyncInterval(86400); //Timedelay for sync in sec 86400 = 1 Tag
   lokaleZeit();
   digitalClockDisplay();
-
+  DEBUG_PRINTLN("••••••••••••••••••••••");
   // Start the server
   server.begin();
   DEBUG_PRINTLN("HTTP Server started");
 
   // Print the IP address
+  DEBUG_PRINT("IP Adress: ");
   DEBUG_PRINTLN(WiFi.localIP());
-
+  DEBUG_PRINTLN("••••••••••••••••••••••");
   //check cycle sequence and switch to the next one
-  DEBUG_PRINT("h:");
+  DEBUG_PRINT("h: ");
   DEBUG_PRINTLN(h);
-  DEBUG_PRINT("iSTOP_HOURS[iACTUAL_CYCLE]):");
+  DEBUG_PRINT("iSTOP_HOURS[iACTUAL_CYCLE]): ");
   DEBUG_PRINTLN(iSTOP_HOURS[iACTUAL_CYCLE]);
   if(h > iSTOP_HOURS[iACTUAL_CYCLE]){
     iACTUAL_CYCLE++;
-      DEBUG_PRINT("iACTUAL_CYCLE:");
+      DEBUG_PRINT("iACTUAL_CYCLE: ");
       DEBUG_PRINTLN(iACTUAL_CYCLE);
     if(h > iSTOP_HOURS[iACTUAL_CYCLE]){
       if (iACTUAL_CYCLE == EEPROM_VALUES.iCYCLE_AMOUNT) {
@@ -1039,12 +1056,15 @@ void setup() {
       }
     }
   }
-  DEBUG_PRINT("iSTOP_HOURS[iACTUAL_CYCLE]):");
+  DEBUG_PRINT("iSTOP_HOURS[iACTUAL_CYCLE]): ");
   DEBUG_PRINTLN(iSTOP_HOURS[iACTUAL_CYCLE]);
-  DEBUG_PRINT("iACTUAL_CYCLE:");
+  DEBUG_PRINT("iACTUAL_CYCLE: ");
   DEBUG_PRINTLN(iACTUAL_CYCLE);
-
+  DEBUG_PRINTLN("••••••••••••••••••••••");
+  DEBUG_PRINT("bot->sendMessage");
   bot->sendMessage("475180895", "Setup/Restart done","");
+  DEBUG_PRINTLN("••••••••••••••••••••••");
+  DEBUG_PRINTLN("•••SETUP FINISH•••");
 }
 //***********************************************
 //MAIN LOOP
