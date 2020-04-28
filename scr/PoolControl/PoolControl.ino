@@ -53,11 +53,11 @@
 /* V0.7                                                                            */
 /* Quality of reception of the WiFi Signal                                         */
 /* V0.8                                                                            */
-
+/* Implement EMONCS for Monitoring                                                 */
+/* show debug index-D in SW Version                                                */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
-/* Implement EMONCS for Monitoring                                                 */
 /* Power Management (Measure Current on Pump & PAC Phase and monitor over EMONCS)  */
 /* Pressure Control for Filter                                                     */
 /* PH Measurement                                                                  */
@@ -77,22 +77,23 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <WebServer.h>
-#include "SPIFFS.h"   // Include the SPIFFS library
-#include "FS.h"   //Include File System Headers
+#include "SPIFFS.h"//Include the SPIFFS library
+#include "FS.h"//Include File System Headers
 #include <OneWire.h>
 #include <DallasTemperature.h>//for DS
 #include <Adafruit_Sensor.h>//for BME280
 #include <Adafruit_BME280.h>//for BME280
-#include <Timezone.h>                       //https://github.com/JChristensen/Timezone
-#include <TimeLib.h>                        //https://github.com/PaulStoffregen/Time
+#include <Timezone.h>//https://github.com/JChristensen/Timezone
+#include <TimeLib.h>//https://github.com/PaulStoffregen/Time
 #include "EEPROM.h"
 #include <UniversalTelegramBot.h>
 #include <Update.h>
+#include <HTTPClient.h>
 //#include <WiFiManager.h>
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.07.12";//SW Revision
+char rev[] = "V0.08.00-R";//SW Revision
 
 //#define DEBUG
 
@@ -100,6 +101,7 @@ char rev[] = "V0.07.12";//SW Revision
   #define DEBUG_PRINT(x) Serial.print(x)
   #define DEBUG_PRINTLN(x) Serial.println(x)
   #define DEBUG 1
+  rev[10] = "D";
 #else
   #define DEBUG_PRINT(x)
   #define DEBUG_PRINTLN(x)
@@ -125,8 +127,17 @@ String approved_chat_id_1, approved_chat_id_2;
 WiFiClientSecure client;
 UniversalTelegramBot *bot;
 int Bot_mtbs = 1000; //mean time between scan messages
-long Bot_lasttime;   //last time messages' scan has been done
+long Bot_lasttime;  //last time messages' scan has been done
 long timecount;
+
+/***********************************************************/
+/*EmonCMS Account Information                              */
+/***********************************************************/
+volatile int EMONCS_updatesequence = 300000;//EMONCS update sequence in ms 5min = 300000ms
+long EMONCS_lasttime; //last time update has been done
+#define EmonCMS_HOST "192.168.0.119"
+#define EmonCMS_NODE "PoolControl"
+#define EmonCMS_APIKey "60ab9904683c455cd2230ac5a7aa0f60"
 
 //Timing CONTROL
 void Alarm(void);
@@ -143,8 +154,8 @@ time_t getNtpTime();
 // - Timezone. - //
 // Bearbeiten Sie diese Zeilen entsprechend Ihrer Zeitzone und Sommerzeit.
 // TimeZone Einstellungen Details https://github.com/JChristensen/Timezone
-TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};     //Central European Time (Frankfurt, Paris)
-TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};       //Central European Time (Frankfurt, Paris)
+TimeChangeRule CEST = {"CEST", Last, Sun, Mar, 2, 120};//Central European Time (Frankfurt, Paris)
+TimeChangeRule CET = {"CET ", Last, Sun, Oct, 3, 60};//Central European Time (Frankfurt, Paris)
 Timezone CE(CEST, CET);
 
 volatile int iSUMMERWINTER_STATUS_OLD;
@@ -368,9 +379,10 @@ void handleNewMessages(int numNewMessages) {
         valid = true;
       }
       if (text == "/Hostname") {
-        String message = "The actual Hostname is:\n";
+        String message = "The actual Hostname is: ";
         message += WiFi.getHostname();
-        message += "The WiFi strenght is:\n";
+        message += "\n";
+        message += "The WiFi strenght is: ";
         message += rssi;
         bot->sendMessage(chat_id, message, "Markdown");
         valid = true;
@@ -474,6 +486,46 @@ void handleNewMessages(int numNewMessages) {
       bot->sendMessage(chat_id, "Your messages couldn't be interpreted by this chat partner. Sorry :)","");
     }
   }
+}
+//***********************************************
+// UpdateEMONCMS
+// input: -
+// return: -
+//***********************************************
+void uploadtoEMONCMS(){
+  DEBUG_PRINTLN("••••••••••••••••••••••");
+  DEBUG_PRINTLN("uploadtoEMONCMS");
+  // build URL string
+  //The String must have the following JSON format:
+  //https://emoncms.org/input/post?node=emontx&fulljson={"power1":100,"power2":200,"power3":300}
+  String url = "http://";
+  url += EmonCMS_HOST;
+  url += "/input/post?node=";
+  url += EmonCMS_NODE;
+  url += "&fulljson={";
+  //Data for EMONCS
+  //WasserTemp / Pump Runtime / Lamp Runtime
+  url += "\"WasserTemp:\"";
+  url += fWaterIn;
+  url += "\"Pump-Runtime:\"";
+  url += RUN_TIME.iPUMP_RUN_TIME/60000;
+  url += "\"Lamp-Runtime:\"";
+  url += RUN_TIME.iLIGHT_RUN_TIME/60000;
+  url += "}&apikey=";
+  url += EmonCMS_APIKey;
+
+  HTTPClient http;
+  // Your Domain name with URL path or IP address with path
+  //http.begin(WiFi.localIP());
+  // Specify content-type header
+  http.addHeader("Content-Type", "application/json");
+  //send HTTP POST request
+  int httpResponseCode = http.POST(url);
+  DEBUG_PRINT("HTTP Response code: ");
+  DEBUG_PRINTLN(httpResponseCode);
+  DEBUG_PRINTLN("••••••••••••••••••••••");
+  // Free resources
+  http.end();
 }
 //***********************************************
 //GetAddressToString (Convert device id to String)
@@ -1156,7 +1208,11 @@ void loop() {
   sensors.requestTemperatures();// Measurement may take up to 750ms
   lokaleZeit(); //Check for time and save it to the variables
   Alarm();//ALARM check
-
+  //EMONCS
+  if(millis() > EMONCS_lasttime + EMONCS_updatesequence){
+    uploadtoEMONCMS();
+    EMONCS_lasttime = millis();
+  }
   //Telegram
   if (millis() > Bot_lasttime + Bot_mtbs)  {
     int numNewMessages = bot->getUpdates(bot->last_message_received + 1);
@@ -1167,8 +1223,7 @@ void loop() {
       numNewMessages = bot->getUpdates(bot->last_message_received + 1);
     }
     Bot_lasttime = millis();
-  }//end of if(millis() > Bot_lasttime + Bot_mtbs)
-
+  }
 }
 //***********************************************
 /*Interrupts*/
