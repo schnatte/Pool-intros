@@ -93,7 +93,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.00-R";//SW Revision
+char rev[] = "V0.08.05-R";//SW Revision
 
 //#define DEBUG
 
@@ -497,7 +497,7 @@ void uploadtoEMONCMS(){
   DEBUG_PRINTLN("uploadtoEMONCMS");
   // build URL string
   //The String must have the following JSON format:
-  //https://emoncms.org/input/post?node=emontx&fulljson={"power1":100,"power2":200,"power3":300}
+  //http://192.168.0.119/input/post?node=PoolControl&fulljson={"WasserTemp":17.00,"Pump-Runtime":0,"Lamp-Runtime":0}&apikey=60ab9904683c455cd2230ac5a7aa0f60
   String url = "http://";
   url += EmonCMS_HOST;
   url += "/input/post?node=";
@@ -505,25 +505,28 @@ void uploadtoEMONCMS(){
   url += "&fulljson={";
   //Data for EMONCS
   //WasserTemp / Pump Runtime / Lamp Runtime
-  url += "\"WasserTemp:\"";
+  url += "\"WasserTemp\":";
   url += fWaterIn;
-  url += "\"Pump-Runtime:\"";
+  url += ",\"Pump-Runtime\":";
   url += RUN_TIME.iPUMP_RUN_TIME/60000;
-  url += "\"Lamp-Runtime:\"";
+  url += ",\"Lamp-Runtime\":";
   url += RUN_TIME.iLIGHT_RUN_TIME/60000;
   url += "}&apikey=";
   url += EmonCMS_APIKey;
 
   HTTPClient http;
   // Your Domain name with URL path or IP address with path
-  //http.begin(WiFi.localIP());
+  http.begin(url.c_str());
   // Specify content-type header
-  http.addHeader("Content-Type", "application/json");
+  //http.addHeader("Content-Type", "application/json");
   //send HTTP POST request
-  int httpResponseCode = http.POST(url);
+  int httpResponseCode = http.GET();
   DEBUG_PRINT("HTTP Response code: ");
   DEBUG_PRINTLN(httpResponseCode);
   DEBUG_PRINTLN("••••••••••••••••••••••");
+
+  //bot->sendMessage("475180895", url,"");//for testing purposes
+  //bot->sendMessage("475180895", httpResponseCode.toString(),"");
   // Free resources
   http.end();
 }
@@ -1115,6 +1118,7 @@ void setup() {
   DEBUG_PRINTLN("••••••••••••••••••••••");
   DEBUG_PRINT("bot->sendMessage");
   bot->sendMessage("475180895", "Setup/Restart done","");
+  bot->sendMessage("475180895", rev,"");
   DEBUG_PRINTLN("••••••••••••••••••••••");
   DEBUG_PRINTLN("•••SETUP FINISH•••");
 }
@@ -1141,7 +1145,6 @@ void loop() {
     iesp_restart++;
     ESP.restart();
   }
-
   //Check Relais status for runtime + status saving
   iSUMMERWINTER_STATUS_OLD = digitalRead(SUMMERWINTER_RELAIS);
   iPumpStatus_OLD = digitalRead(PUMP_RELAIS);
@@ -1210,6 +1213,7 @@ void loop() {
   Alarm();//ALARM check
   //EMONCS
   if(millis() > EMONCS_lasttime + EMONCS_updatesequence){
+    //bot->sendMessage("475180895", "uploadtoEMONCMS","");//for testing purposes
     uploadtoEMONCMS();
     EMONCS_lasttime = millis();
   }
