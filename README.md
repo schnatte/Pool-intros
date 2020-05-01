@@ -12,13 +12,13 @@ A distance control can be done over telegram
 - [x] Telegram for Information and action
 - [x] OTA WebUpdater
 - [x] Quality of reception of WiFi Signal
+- [x] Implement EMONCS for Monitoring
 - [ ] Pressure Control for Filter
 - [ ] PH Measurement
 - [ ] Redox Measurement
 - [ ] PH & Redox analysis and graph
 - [ ] Level detector in the skimmer
 - [ ] RF Control for the opening and closing of the terrasse
-- [ ] Implement EMONCS for Monitoring
 - [ ] Power Management (Measure Current on Pump & PAC Phase and monitor over EMONCS)
 
 
