@@ -55,6 +55,9 @@
 /* V0.8                                                                            */
 /* Implement EMONCS for Monitoring                                                 */
 /* show debug index-D in SW Version                                                */
+/* -.06 add Pump status to EMONCS                                                  */
+/* -.06 Runtime counter for Pump + Lamp chanded to continous counting not only at  */
+/*      Stop                                                                       */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -93,7 +96,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.05-R";//SW Revision
+char rev[] = "V0.08.06-R";//SW Revision
 
 //#define DEBUG
 
@@ -507,6 +510,8 @@ void uploadtoEMONCMS(){
   //WasserTemp / Pump Runtime / Lamp Runtime
   url += "\"WasserTemp\":";
   url += fWaterIn;
+  url += ",\"PumpON\":";
+  url += RELAIS_STATUS.iPumpStatus;
   url += ",\"Pump-Runtime\":";
   url += RUN_TIME.iPUMP_RUN_TIME/60000;
   url += ",\"Lamp-Runtime\":";
@@ -517,8 +522,6 @@ void uploadtoEMONCMS(){
   HTTPClient http;
   // Your Domain name with URL path or IP address with path
   http.begin(url.c_str());
-  // Specify content-type header
-  //http.addHeader("Content-Type", "application/json");
   //send HTTP POST request
   int httpResponseCode = http.GET();
   DEBUG_PRINT("HTTP Response code: ");
@@ -807,6 +810,7 @@ void setup() {
   for(uint8_t i = 0; i < 8; i++){
      EEPROM_VALUES.sensor2[i] = s2[i];
   }
+  /*
 //SAVE SENSORS IN EEPROM BACK-UP
 //  DEBUG_PRINTLN("••••••••••••••••••••••");
 //  DEBUG_PRINTLN("Save Sensors");
@@ -828,6 +832,7 @@ void setup() {
 //    EEPROM.commit();
 //  DEBUG_PRINTLN("••••••••••••••••••••••");
 // END! SAVE SENSORS IN EEPROM BACK-UP
+*/
   //Check EEPROM Values for Run Time
   DEBUG_PRINTLN("Load RunTime into RAM");
   EEPROM.get(iAdr_Eeprom_runtime, RUN_TIME);
@@ -881,7 +886,7 @@ void setup() {
     //Take default values
     DEBUG_PRINTLN("Take default values Status");
     RELAIS_STATUS.STRUCTversion = 1;
-    RELAIS_STATUS.iSUMMERWINTER_STATUS = 0; //1 = Sommer 0 = Winter
+    RELAIS_STATUS.iSUMMERWINTER_STATUS = 1; //1 = Sommer 0 = Winter
     RELAIS_STATUS.iPumpStatus = 1; //0 = ON, 1 = OFF
     RELAIS_STATUS.iLIGHT_STATUS = 1; //0 = ON, 1 = OFF
     RELAIS_STATUS.iPAC_STATUS = 1; //0 = ON, 1 = OFF
@@ -1172,12 +1177,12 @@ void loop() {
     }
   }
 */
-  //Runtime counter
+  //Runtime counter for Pump & Light
   if(iPumpStatus_OLD != digitalRead(PUMP_RELAIS)){
     if(RELAIS_STATUS.iPumpStatus == 0){
       iPUMP_TIME = millis();//Start counting
     }else if (RELAIS_STATUS.iPumpStatus == 1){
-      RUN_TIME.iPUMP_RUN_TIME = (RUN_TIME.iPUMP_RUN_TIME + (millis()-iPUMP_TIME));//Stop counting in millisecondes /60000
+      iPUMP_TIME = RUN_TIME.iPUMP_RUN_TIME;//Stop counting in millisecondes /60000
       /*{//save to EEPROM
          uint8_t *address = (uint8_t*)&RUN_TIME;
          uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(RUN_TIME_STRUCT) - sizeof(uint32_t));//address, size
@@ -1190,12 +1195,13 @@ void loop() {
        }*/
     }
   }
+  RUN_TIME.iPUMP_RUN_TIME = (RUN_TIME.iPUMP_RUN_TIME + (millis()-iPUMP_TIME));//Count actual run time
 
   if(iLIGHT_STATUS_OLD != digitalRead(LIGHT_RELAIS)){
     if(RELAIS_STATUS.iLIGHT_STATUS == 0){
       iLIGHT_TIME = millis();//Start counting
     }else if (RELAIS_STATUS.iLIGHT_STATUS == 1){
-      RUN_TIME.iLIGHT_RUN_TIME = (RUN_TIME.iLIGHT_RUN_TIME + (millis()-iLIGHT_TIME));//Stop counting in millisecondes /60000
+      iLIGHT_TIME = RUN_TIME.iLIGHT_RUN_TIME;//Stop counting in millisecondes /60000
       /*{//save to EEPROM
          uint8_t *address = (uint8_t*)&RUN_TIME;
          uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(RUN_TIME_STRUCT) - sizeof(uint32_t));//address, size
@@ -1208,6 +1214,8 @@ void loop() {
        }*/
     }
   }
+  RUN_TIME.iLIGHT_RUN_TIME = (RUN_TIME.iLIGHT_RUN_TIME + (millis()-iLIGHT_TIME));//Count actual run time
+
   sensors.requestTemperatures();// Measurement may take up to 750ms
   lokaleZeit(); //Check for time and save it to the variables
   Alarm();//ALARM check
