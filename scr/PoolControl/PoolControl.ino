@@ -58,7 +58,8 @@
 /* -.06 add Pump status to EMONCS                                                  */
 /* -.06 Runtime counter for Pump + Lamp chanded to continous counting not only at  */
 /*      Stop                                                                       */
-/* -.07 Corrctions in Runtime counter for Pump + Lamp                              */
+/* -.07 Corrections in Runtime counter for Pump + Lamp                             */
+/* -.08 Invert Pump Status for EMONCS upload error correction on RunTime counting  */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -97,7 +98,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.07-R";//SW Revision
+char rev[] = "V0.08.08-R";//SW Revision
 
 //#define DEBUG
 
@@ -499,6 +500,16 @@ void handleNewMessages(int numNewMessages) {
 void uploadtoEMONCMS(){
   DEBUG_PRINTLN("••••••••••••••••••••••");
   DEBUG_PRINTLN("uploadtoEMONCMS");
+
+  //invert iPumpStatus 0=1, 1=0
+  int iPS;
+  if(RELAIS_STATUS.iPumpStatus == 0){//Pump ON
+    iPS = 1;
+  }
+  if(RELAIS_STATUS.iPumpStatus == 1){//Pump OFF
+    iPS = 0;
+  }
+
   // build URL string
   //The String must have the following JSON format:
   //http://192.168.0.119/input/post?node=PoolControl&fulljson={"WasserTemp":17.00,"Pump-Runtime":0,"Lamp-Runtime":0}&apikey=60ab9904683c455cd2230ac5a7aa0f60
@@ -512,7 +523,7 @@ void uploadtoEMONCMS(){
   url += "\"WasserTemp\":";
   url += fWaterIn;
   url += ",\"PumpON\":";
-  url += ~RELAIS_STATUS.iPumpStatus;
+  url += iPS;
   url += ",\"Pump-Runtime\":";
   url += RUN_TIME.iPUMP_RUN_TIME/60000;
   url += ",\"Lamp-Runtime\":";
@@ -1197,7 +1208,7 @@ void loop() {
     }
   }
   if(RELAIS_STATUS.iPumpStatus == 0){//Pump is Running
-    RUN_TIME.iPUMP_RUN_TIME = (RUN_TIME.iPUMP_RUN_TIME + (millis()-iPUMP_TIME));//Count actual run time
+    RUN_TIME.iPUMP_RUN_TIME = (RUN_TIME.iPUMP_RUN_TIME + (millis()-iPUMP_TIME))/60000;//Count actual run time
   }
 
   if(iLIGHT_STATUS_OLD != digitalRead(LIGHT_RELAIS)){
@@ -1218,7 +1229,7 @@ void loop() {
     }
   }
   if(RELAIS_STATUS.iLIGHT_STATUS == 0){//Light is Running
-    RUN_TIME.iLIGHT_RUN_TIME = (RUN_TIME.iLIGHT_RUN_TIME + (millis()-iLIGHT_TIME));//Count actual run time
+    RUN_TIME.iLIGHT_RUN_TIME = (RUN_TIME.iLIGHT_RUN_TIME + (millis()-iLIGHT_TIME))/60000;//Count actual run time
   }
 
   sensors.requestTemperatures();// Measurement may take up to 750ms
