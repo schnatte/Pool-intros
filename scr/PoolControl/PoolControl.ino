@@ -58,6 +58,7 @@
 /* -.06 add Pump status to EMONCS                                                  */
 /* -.06 Runtime counter for Pump + Lamp chanded to continous counting not only at  */
 /*      Stop                                                                       */
+/* -.07 Corrctions in Runtime counter for Pump + Lamp                              */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -96,7 +97,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.06-R";//SW Revision
+char rev[] = "V0.08.07-R";//SW Revision
 
 //#define DEBUG
 
@@ -507,11 +508,11 @@ void uploadtoEMONCMS(){
   url += EmonCMS_NODE;
   url += "&fulljson={";
   //Data for EMONCS
-  //WasserTemp / Pump Runtime / Lamp Runtime
+  //WasserTemp / /Pump Status / Pump Runtime / Lamp Runtime
   url += "\"WasserTemp\":";
   url += fWaterIn;
   url += ",\"PumpON\":";
-  url += RELAIS_STATUS.iPumpStatus;
+  url += ~RELAIS_STATUS.iPumpStatus;
   url += ",\"Pump-Runtime\":";
   url += RUN_TIME.iPUMP_RUN_TIME/60000;
   url += ",\"Lamp-Runtime\":";
@@ -1195,7 +1196,9 @@ void loop() {
        }*/
     }
   }
-  RUN_TIME.iPUMP_RUN_TIME = (RUN_TIME.iPUMP_RUN_TIME + (millis()-iPUMP_TIME));//Count actual run time
+  if(RELAIS_STATUS.iPumpStatus == 0){//Pump is Running
+    RUN_TIME.iPUMP_RUN_TIME = (RUN_TIME.iPUMP_RUN_TIME + (millis()-iPUMP_TIME));//Count actual run time
+  }
 
   if(iLIGHT_STATUS_OLD != digitalRead(LIGHT_RELAIS)){
     if(RELAIS_STATUS.iLIGHT_STATUS == 0){
@@ -1214,7 +1217,9 @@ void loop() {
        }*/
     }
   }
-  RUN_TIME.iLIGHT_RUN_TIME = (RUN_TIME.iLIGHT_RUN_TIME + (millis()-iLIGHT_TIME));//Count actual run time
+  if(RELAIS_STATUS.iLIGHT_STATUS == 0){//Light is Running
+    RUN_TIME.iLIGHT_RUN_TIME = (RUN_TIME.iLIGHT_RUN_TIME + (millis()-iLIGHT_TIME));//Count actual run time
+  }
 
   sensors.requestTemperatures();// Measurement may take up to 750ms
   lokaleZeit(); //Check for time and save it to the variables
