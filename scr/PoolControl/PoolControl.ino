@@ -60,6 +60,7 @@
 /*      Stop                                                                       */
 /* -.07 Corrections in Runtime counter for Pump + Lamp                             */
 /* -.08 Invert Pump Status for EMONCS upload error correction on RunTime counting  */
+/* -.09 Failure in RunTime Counter corrected                                       */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -98,7 +99,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.08-R";//SW Revision
+char rev[] = "V0.08.09-R";//SW Revision
 
 //#define DEBUG
 
@@ -224,8 +225,8 @@ volatile int iSTOP_TIME; //Total Stop Time of a day
 volatile int iSTOP_HOURS[3];
 
 //Runtime variables
-int iPUMP_TIME = 0;
-int iLIGHT_TIME = 0;
+static unsigned long ulPUMP_TIME;
+static unsigned long ulLIGHT_TIME;
 
 int iACTUAL_CYCLE = 1;
 
@@ -1192,9 +1193,9 @@ void loop() {
   //Runtime counter for Pump & Light
   if(iPumpStatus_OLD != digitalRead(PUMP_RELAIS)){
     if(RELAIS_STATUS.iPumpStatus == 0){
-      iPUMP_TIME = millis();//Start counting
-    }else if (RELAIS_STATUS.iPumpStatus == 1){
-      iPUMP_TIME = RUN_TIME.iPUMP_RUN_TIME;//Stop counting in millisecondes /60000
+      ulPUMP_TIME = millis() + 1000;//Start counting
+    }/*else if (RELAIS_STATUS.iPumpStatus == 1){
+      ulPUMP_TIME = RUN_TIME.iPUMP_RUN_TIME;//Stop counting in millisecondes /60000
       /*{//save to EEPROM
          uint8_t *address = (uint8_t*)&RUN_TIME;
          uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(RUN_TIME_STRUCT) - sizeof(uint32_t));//address, size
@@ -1205,17 +1206,22 @@ void loop() {
          EEPROM.put(iAdr_Eeprom_runtime, RUN_TIME);
          EEPROM.commit();
        }*/
-    }
+    //}
   }
   if(RELAIS_STATUS.iPumpStatus == 0){//Pump is Running
-    RUN_TIME.iPUMP_RUN_TIME = (RUN_TIME.iPUMP_RUN_TIME + (millis()-iPUMP_TIME))/60000;//Count actual run time
+    if((long) (millis() - ulPUMP_TIME) >=0){
+      RUN_TIME.iPUMP_RUN_TIME ++;//Count 1 Second to RunTime
+      ulPUMP_TIME += 1000;
+    }
   }
+
+
 
   if(iLIGHT_STATUS_OLD != digitalRead(LIGHT_RELAIS)){
     if(RELAIS_STATUS.iLIGHT_STATUS == 0){
-      iLIGHT_TIME = millis();//Start counting
-    }else if (RELAIS_STATUS.iLIGHT_STATUS == 1){
-      iLIGHT_TIME = RUN_TIME.iLIGHT_RUN_TIME;//Stop counting in millisecondes /60000
+      ulLIGHT_TIME = millis() + 1000;//Start counting
+    }/*else if (RELAIS_STATUS.iLIGHT_STATUS == 1){
+      ulLIGHT_TIME = RUN_TIME.iLIGHT_RUN_TIME;//Stop counting in millisecondes /60000
       /*{//save to EEPROM
          uint8_t *address = (uint8_t*)&RUN_TIME;
          uint32_t calculatedCrc = calcCrc(address+sizeof(uint32_t), sizeof(RUN_TIME_STRUCT) - sizeof(uint32_t));//address, size
@@ -1226,10 +1232,13 @@ void loop() {
          EEPROM.put(iAdr_Eeprom_runtime, RUN_TIME);
          EEPROM.commit();
        }*/
-    }
+    //}
   }
   if(RELAIS_STATUS.iLIGHT_STATUS == 0){//Light is Running
-    RUN_TIME.iLIGHT_RUN_TIME = (RUN_TIME.iLIGHT_RUN_TIME + (millis()-iLIGHT_TIME))/60000;//Count actual run time
+    if((long) (millis() - ulLIGHT_TIME) >=0){
+      RUN_TIME.iLIGHT_RUN_TIME ++;//Count 1 Second to RunTime
+      ulLIGHT_TIME += 1000;
+    }
   }
 
   sensors.requestTemperatures();// Measurement may take up to 750ms

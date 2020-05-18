@@ -39,3 +39,15 @@ I discover that the electrical noise on the switching relais and Interrupt was h
 ### The Relais Holder was made with
 ![Relais1](https://github.com/schnatte/PoolControl/blob/master/Pictures/IMG_4106.jpg)
 ![Relais2](https://github.com/schnatte/PoolControl/blob/master/Pictures/IMG_4105.jpg)
+
+### Possible implementation to have a HW Switch for the PUMP function - not impleöented so far.
+The switch shall have the availability to switch between OFF/ALWAYS ON/uC functionality
+
+uC    5V
+|     |
+|   [10k]Pullup
+|     |
+  --------------- RELAIS
+|
+|
+GND
