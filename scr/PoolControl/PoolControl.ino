@@ -61,6 +61,7 @@
 /* -.07 Corrections in Runtime counter for Pump + Lamp                             */
 /* -.08 Invert Pump Status for EMONCS upload error correction on RunTime counting  */
 /* -.09 Failure in RunTime Counter corrected                                       */
+/* -.10 Failure in One wire Temp control + Timing calculation corrected            */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -99,7 +100,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.09-R";//SW Revision
+char rev[] = "V0.08.10-R";//SW Revision
 
 //#define DEBUG
 
@@ -1215,8 +1216,6 @@ void loop() {
     }
   }
 
-
-
   if(iLIGHT_STATUS_OLD != digitalRead(LIGHT_RELAIS)){
     if(RELAIS_STATUS.iLIGHT_STATUS == 0){
       ulLIGHT_TIME = millis() + 1000;//Start counting
@@ -1241,7 +1240,11 @@ void loop() {
     }
   }
 
+  //Check One Wire Sensors
   sensors.requestTemperatures();// Measurement may take up to 750ms
+  delay(750);
+  fWaterIn = sensors.getTempC(EEPROM_VALUES.sensor1);
+
   lokaleZeit(); //Check for time and save it to the variables
   Alarm();//ALARM check
   //EMONCS
@@ -1534,9 +1537,9 @@ void handle_LED(){
     }
 
     updated_info += "\",\"value6\":\"";
-    updated_info += RUN_TIME.iPUMP_RUN_TIME/60000;
+    updated_info += RUN_TIME.iPUMP_RUN_TIME;
     updated_info += "\",\"value7\":\"";
-    updated_info +=RUN_TIME.iLIGHT_RUN_TIME/60000;
+    updated_info +=RUN_TIME.iLIGHT_RUN_TIME;
     updated_info += "\"}";
 
     //send JSON string to Webside with updated information
@@ -2234,15 +2237,15 @@ String SendHTML(){
   }
   ptr +="<tr>\n";//Zeile 6
   ptr +="<td colspan='3'>Pump Runtime: <span id='PUMP_RUN_TIME'>\n";
-  ptr +=RUN_TIME.iPUMP_RUN_TIME/60000;
+  ptr +=RUN_TIME.iPUMP_RUN_TIME/60;
   ptr +="</span> Minutes, <span id='PUMP_RUN_TIME'>\n";
-  ptr +=(RUN_TIME.iPUMP_RUN_TIME/60000)/60;
+  ptr +=(RUN_TIME.iPUMP_RUN_TIME/60)/60;
   ptr +="</span> Hours</td>\n";
   ptr +="<tr>\n";//Zeile 7
   ptr +="<td colspan='3'>Light Runtime: <span id='LIGHT_RUN_TIME'>\n";
-  ptr +=RUN_TIME.iLIGHT_RUN_TIME/60000;
+  ptr +=RUN_TIME.iLIGHT_RUN_TIME/60;
   ptr +="</span> Minutes, <span id='LIGHT_RUN_TIME'>\n";
-  ptr +=(RUN_TIME.iLIGHT_RUN_TIME/60000)/60;
+  ptr +=(RUN_TIME.iLIGHT_RUN_TIME/60)/60;
   ptr +="</span> Hours</td>\n";
   ptr +="</tr></table>\n";//</tbody>
 
