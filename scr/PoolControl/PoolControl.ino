@@ -62,6 +62,7 @@
 /* -.08 Invert Pump Status for EMONCS upload error correction on RunTime counting  */
 /* -.09 Failure in RunTime Counter corrected                                       */
 /* -.10 Failure in One wire Temp control + Timing calculation corrected            */
+/* -.11 Failure in Timing calculation on Telegram & EmonCMS corrected              */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -100,7 +101,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.10-R";//SW Revision
+char rev[] = "V0.08.11-R";//SW Revision
 
 //#define DEBUG
 
@@ -432,9 +433,9 @@ void handleNewMessages(int numNewMessages) {
           message += ":00h\n";
         }
         message += "Pump run time: ";
-        message += RUN_TIME.iPUMP_RUN_TIME/60000;
+        message += RUN_TIME.iPUMP_RUN_TIME/60;
         message += "min |";
-        message += (RUN_TIME.iPUMP_RUN_TIME/60000)/60;
+        message += (RUN_TIME.iPUMP_RUN_TIME/60)/60;
         message += "h\n";
         if(RELAIS_STATUS.iLIGHT_STATUS == 1){
           message += "Light: OFF\n";
@@ -442,9 +443,9 @@ void handleNewMessages(int numNewMessages) {
           message += "Light: ON\n";
         }
         message += "Light run time: ";
-        message += RUN_TIME.iLIGHT_RUN_TIME/60000;
+        message += RUN_TIME.iLIGHT_RUN_TIME/60;
         message += "min |";
-        message += (RUN_TIME.iLIGHT_RUN_TIME/60000)/60;
+        message += (RUN_TIME.iLIGHT_RUN_TIME/60)/60;
         message += "h\n";
         if(RELAIS_STATUS.iPAC_STATUS == 1){
           message += "PAC: OFF\n";
@@ -527,9 +528,9 @@ void uploadtoEMONCMS(){
   url += ",\"PumpON\":";
   url += iPS;
   url += ",\"Pump-Runtime\":";
-  url += RUN_TIME.iPUMP_RUN_TIME/60000;
+  url += RUN_TIME.iPUMP_RUN_TIME/60;
   url += ",\"Lamp-Runtime\":";
-  url += RUN_TIME.iLIGHT_RUN_TIME/60000;
+  url += RUN_TIME.iLIGHT_RUN_TIME/60;
   url += "}&apikey=";
   url += EmonCMS_APIKey;
 
