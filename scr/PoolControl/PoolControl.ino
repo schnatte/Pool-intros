@@ -63,6 +63,7 @@
 /* -.09 Failure in RunTime Counter corrected                                       */
 /* -.10 Failure in One wire Temp control + Timing calculation corrected            */
 /* -.11 Failure in Timing calculation on Telegram & EmonCMS corrected              */
+/* -.12 Add Temp out to EMONCS and in MainLoop, add BME read in Main Loop          */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -101,7 +102,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.11-R";//SW Revision
+char rev[] = "V0.08.12-R";//SW Revision
 
 //#define DEBUG
 
@@ -523,8 +524,10 @@ void uploadtoEMONCMS(){
   url += "&fulljson={";
   //Data for EMONCS
   //WasserTemp / /Pump Status / Pump Runtime / Lamp Runtime
-  url += "\"WasserTemp\":";
+  url += "\"WasserTempIN\":";
   url += fWaterIn;
+  url += ",\"WasserTempOUT\":";
+  url += fWaterOut;
   url += ",\"PumpON\":";
   url += iPS;
   url += ",\"Pump-Runtime\":";
@@ -1243,8 +1246,14 @@ void loop() {
 
   //Check One Wire Sensors
   sensors.requestTemperatures();// Measurement may take up to 750ms
-  delay(750);
+  //delay(750);
   fWaterIn = sensors.getTempC(EEPROM_VALUES.sensor1);
+  fWaterOut = sensors.getTempC(EEPROM_VALUES.sensor2);
+
+  //Check BME280
+  fTempOut = bme.readTemperature();
+  fHumOut = bme.readHumidity();
+  fPresOut = bme.readPressure() / 100.0F;
 
   lokaleZeit(); //Check for time and save it to the variables
   Alarm();//ALARM check
