@@ -64,6 +64,8 @@
 /* -.10 Failure in One wire Temp control + Timing calculation corrected            */
 /* -.11 Failure in Timing calculation on Telegram & EmonCMS corrected              */
 /* -.12 Add Temp out to EMONCS and in MainLoop, add BME read in Main Loop          */
+/* -.12 Water Sensor OUT Adress put in code                                        */
+/* -.13 remove EEPROM check for 1 wire sensors                                     */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -102,7 +104,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.12-R";//SW Revision
+char rev[] = "V0.08.13-R";//SW Revision
 
 //#define DEBUG
 
@@ -272,7 +274,7 @@ OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 
 DeviceAddress s1 = { 0x28, 0xFF, 0x97, 0x02, 0x0B, 0x00, 0x00, 0x68 }; //Water IN
-DeviceAddress s2 = { 0x28, 0xFF, 0xD9, 0xD5, 0xB1, 0x17, 0x4, 0x91 }; //Water OUT
+DeviceAddress s2 = { 0x28, 0xFF, 0xFC, 0xFD, 0xA2, 0x17, 0x05, 0x27 }; //Water OUT
 DeviceAddress tempDeviceAddress[4]; // We'll use this variable to store a found device address
 int numberOfDevices; // Number of temperature devices found
 
@@ -934,8 +936,8 @@ void setup() {
   //Check Sensors
   sensors.requestTemperatures();// Measurement may take up to 750ms
   delay(750);
-  fWaterIn = sensors.getTempC(EEPROM_VALUES.sensor1);
-  fWaterOut = sensors.getTempC(EEPROM_VALUES.sensor2);
+  fWaterIn = sensors.getTempC(s1);
+  fWaterOut = sensors.getTempC(s2);
 
   DEBUG_PRINT("Water Temperature in: ");
   DEBUG_PRINT(fWaterIn);
@@ -1247,8 +1249,8 @@ void loop() {
   //Check One Wire Sensors
   sensors.requestTemperatures();// Measurement may take up to 750ms
   //delay(750);
-  fWaterIn = sensors.getTempC(EEPROM_VALUES.sensor1);
-  fWaterOut = sensors.getTempC(EEPROM_VALUES.sensor2);
+  fWaterIn = sensors.getTempC(s1);
+  fWaterOut = sensors.getTempC(s2);
 
   //Check BME280
   fTempOut = bme.readTemperature();
@@ -1567,8 +1569,8 @@ void handle_GAUGES(){
   s = t_state.toInt();
 
    //Check Sensors
-  fWaterIn = sensors.getTempC(EEPROM_VALUES.sensor1);
-  fWaterOut = sensors.getTempC(EEPROM_VALUES.sensor2);
+  fWaterIn = sensors.getTempC(s1);
+  fWaterOut = sensors.getTempC(s2);
   fTempOut = bme.readTemperature();
   fHumOut = bme.readHumidity();
   fPresOut = bme.readPressure() / 100.0F;
