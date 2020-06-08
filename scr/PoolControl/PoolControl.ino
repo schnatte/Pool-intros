@@ -66,6 +66,7 @@
 /* -.12 Add Temp out to EMONCS and in MainLoop, add BME read in Main Loop          */
 /* -.12 Water Sensor OUT Adress put in code                                        */
 /* -.13 remove EEPROM check for 1 wire sensors                                     */
+/* -.14 add timing sequence for Sensor request due to unforseen resets             */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -104,7 +105,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.13-R";//SW Revision
+char rev[] = "V0.08.14-R";//SW Revision
 
 //#define DEBUG
 
@@ -281,6 +282,10 @@ int numberOfDevices; // Number of temperature devices found
 //BME280
 #define SEALEVELPRESSURE_HPA (1013.25)
 Adafruit_BME280 bme; // I2C
+
+//Update sequence for Sensors
+volatile int Sensors_updatesequence = 270000;//EMONCS update sequence in ms 4.5min = 270000ms
+long Sensors_lasttime; //last time update has been done
 
 //***********************************************
 //-handleNewMessages
@@ -1245,17 +1250,21 @@ void loop() {
       ulLIGHT_TIME += 1000;
     }
   }
+  //Check for Sensors
+  if(millis() > Sensors_lasttime + Sensors_updatesequence){
+    //Check One Wire Sensors
+    sensors.requestTemperatures();// Measurement may take up to 750ms
+    //delay(750);
+    fWaterIn = sensors.getTempC(s1);
+    fWaterOut = sensors.getTempC(s2);
 
-  //Check One Wire Sensors
-  sensors.requestTemperatures();// Measurement may take up to 750ms
-  //delay(750);
-  fWaterIn = sensors.getTempC(s1);
-  fWaterOut = sensors.getTempC(s2);
+    //Check BME280
+    fTempOut = bme.readTemperature();
+    fHumOut = bme.readHumidity();
+    fPresOut = bme.readPressure() / 100.0F;
 
-  //Check BME280
-  fTempOut = bme.readTemperature();
-  fHumOut = bme.readHumidity();
-  fPresOut = bme.readPressure() / 100.0F;
+    Sensors_lasttime = millis();
+  }
 
   lokaleZeit(); //Check for time and save it to the variables
   Alarm();//ALARM check
@@ -1567,7 +1576,7 @@ void handle_GAUGES(){
   //DEBUG_PRINTLN(t_state);
   int s;
   s = t_state.toInt();
-
+  
    //Check Sensors
   fWaterIn = sensors.getTempC(s1);
   fWaterOut = sensors.getTempC(s2);
