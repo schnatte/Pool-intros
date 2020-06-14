@@ -13,12 +13,13 @@ A distance control can be done over telegram
 - [x] OTA WebUpdater
 - [x] Quality of reception of WiFi Signal
 - [x] Implement EMONCS for Monitoring
+- [x] Temperature Sensor in the skimmer
 - [ ] Pressure Control for Filter
 - [ ] PH Measurement
 - [ ] Redox Measurement
 - [ ] PH & Redox analysis and graph
 - [ ] Level detector in the skimmer
-- [ ] RF Control for the opening and closing of the terrasse
+- [ ] RF Control for the opening and closing of the moving deck.
 - [ ] Power Management (Measure Current on Pump & PAC Phase and monitor over EMONCS)
 
 
@@ -40,8 +41,8 @@ I discover that the electrical noise on the switching relais and Interrupt was h
 ![Relais1](https://github.com/schnatte/PoolControl/blob/master/Pictures/IMG_4106.jpg)
 ![Relais2](https://github.com/schnatte/PoolControl/blob/master/Pictures/IMG_4105.jpg)
 
-### Possible implementation to have a HW Switch for the PUMP function - not impleöented so far.
-The switch shall have the availability to switch between OFF/ALWAYS ON/uC functionality
+### Possible implementation to have a HW Switch for the PUMP function - not implemented so far.
+The switch shall have the availability to switch between OFF/ALWAYS ON/uC functionality. In case of trouble with the uC functionality a manual mode can be choosen.
 
 uC    5V
 |     |

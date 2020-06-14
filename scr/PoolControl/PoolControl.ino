@@ -73,7 +73,7 @@
 /* -.18 Debug on Telegram removed. Host Name change from Pump to Pool Control      */
 
 /* V0.x */
-/* WiFi Manager - Done  V0.2                                                       */
+/* WiFi Manager - Done  V0.2 (but desactivated)                                    */
 /* Power Management (Measure Current on Pump & PAC Phase and monitor over EMONCS)  */
 /* Pressure Control for Filter                                                     */
 /* PH Measurement                                                                  */
@@ -81,7 +81,6 @@
 /* PH & Redox analysis and graph                                                   */
 /* Level detector in the skimmer                                                   */
 /* RF Control for the opening and closing of the terasse                           */
-/* Implement EMONCS for Monitoring                                                 */
 
 /* Arduino Board: ESP32 Dev Modul                                                  */
 /* by Daniel Kettnaker  2019                                                       */
