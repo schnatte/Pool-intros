@@ -67,6 +67,10 @@
 /* -.12 Water Sensor OUT Adress put in code                                        */
 /* -.13 remove EEPROM check for 1 wire sensors                                     */
 /* -.14 add timing sequence for Sensor request due to unforseen resets             */
+/* -.15 error correction in Precision                                              */
+/* -.16 Telegram file read check implemented                                       */
+/* -.17 Debug on Telegram                                                          */
+/* -.18 Debug on Telegram removed. Host Name change from Pump to Pool Control      */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2                                                       */
@@ -105,7 +109,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.14-R";//SW Revision
+char rev[] = "V0.08.18-R";//SW Revision
 
 //#define DEBUG
 
@@ -121,7 +125,7 @@ char rev[] = "V0.08.14-R";//SW Revision
 #endif
 
 // WiFi connection
-char wiFiHostname[ ] = "Pump - Control";
+char wiFiHostname[ ] = "Pool - Control";
 const char* ssid = "Freebox_AFFF90";
 const char* password = "delphinedaniel";
 int wifi_retry = 0;
@@ -214,7 +218,7 @@ volatile int iPAC_STATUS = 1; //0 = ON, 1 = OFF
 
 struct RELAIS_STATUS_STRUCT{
   uint32_t crc;
-  uint32_t STRUCTversion;           //from eeprom structure
+  uint32_t STRUCTversion;//from eeprom structure
   int iSUMMERWINTER_STATUS;
   int iPumpStatus;
   int iLIGHT_STATUS;
@@ -294,6 +298,7 @@ void handleNewMessages(int numNewMessages) {
   DEBUG_PRINTLN("handleNewMessages");
   DEBUG_PRINT("numNewMessages: ");
   DEBUG_PRINTLN(String(numNewMessages));
+  //bot->sendMessage("475180895", "handleNewMessages",""); //Debug over Telegram
   bool valid = false;
 
   for (int i=0; i<numNewMessages; i++) {
@@ -811,12 +816,13 @@ void setup() {
     EEPROM_VALUES.iCYCLE_AMOUNT = 2;
     EEPROM_VALUES.iCORRECTION_FACTOR = 7;
     EEPROM_VALUES.TEMPERATURE_PRECISION = 11; // high resolution
+    /*
     for(uint8_t i = 0; i < 8; i++){
       EEPROM_VALUES.sensor1[i] = s1[i];
     }
     for(uint8_t i = 0; i < 8; i++){
        EEPROM_VALUES.sensor2[i] = s2[i];
-    }
+    }*/
     DEBUG_PRINTLN("calculatedCrcEEPROM");
     calculatedCrcEEPROM = calcCrc(address+sizeof(uint32_t), sizeof(EEPROM_STRUCT) - sizeof(uint32_t));//address, size
 
@@ -829,6 +835,7 @@ void setup() {
     DEBUG_PRINTLN("EEPROM Values will be taken");
     valid = false;
   }
+  /*
   for(uint8_t i = 0; i < 8; i++){
       EEPROM_VALUES.sensor1[i] = s1[i];
   }
@@ -934,8 +941,11 @@ void setup() {
   DEBUG_PRINT( numberOfDevices );
   DEBUG_PRINTLN( " One Wire devices found.");
 
-  sensors.setResolution(EEPROM_VALUES.sensor1, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
-  sensors.setResolution(EEPROM_VALUES.sensor2, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
+  //sensors.setResolution(EEPROM_VALUES.sensor1, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
+  //sensors.setResolution(EEPROM_VALUES.sensor2, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
+
+  sensors.setResolution(s1, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
+  sensors.setResolution(s2, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
 
   //Init Sensorvalues
   //Check Sensors
@@ -1001,7 +1011,10 @@ void setup() {
   File file = SPIFFS.open("/telegram.txt");
   if(!file){
       DEBUG_PRINTLN("Failed to open file for reading");
-      //bot->sendMessage("475180895", "Failed to open file for reading","");
+      bot->sendMessage("475180895", "Failed to open file for reading. Alternative Values will be taken.","");
+      String BOTtoken = "652814945:AAEUi9_m3vS4vIOqa5_ufKgDxZ1MMYm0R5g";
+      approved_chat_id_1 = "475180895";
+      approved_chat_id_2 = "870108903";
       return;
   }
   DEBUG_PRINTLN("File Content will be read");
@@ -1576,7 +1589,7 @@ void handle_GAUGES(){
   //DEBUG_PRINTLN(t_state);
   int s;
   s = t_state.toInt();
-  
+
    //Check Sensors
   fWaterIn = sensors.getTempC(s1);
   fWaterOut = sensors.getTempC(s2);
@@ -1849,8 +1862,8 @@ void handle_TempPreci(){
   DEBUG_PRINTLN(t_state);
 
   EEPROM_VALUES.TEMPERATURE_PRECISION = t_state.toInt();
-  sensors.setResolution(EEPROM_VALUES.sensor1, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
-  sensors.setResolution(EEPROM_VALUES.sensor2, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
+  sensors.setResolution(s1, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
+  sensors.setResolution(s2, EEPROM_VALUES.TEMPERATURE_PRECISION);// set the resolution to TEMPERATURE_PRECISION bit
   DEBUG_PRINTLN("Temperature Precision is changed Save in EEPROM");
   {
     uint8_t *address = (uint8_t*)&EEPROM_VALUES;
