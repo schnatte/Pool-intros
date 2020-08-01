@@ -71,6 +71,10 @@
 /* -.16 Telegram file read check implemented                                       */
 /* -.17 Debug on Telegram                                                          */
 /* -.18 Debug on Telegram removed. Host Name change from Pump to Pool Control      */
+/* -.19 Summer Winter Status default 1 Debug on Telegram removed.
+        Host Name change from Pump to Pool Control
+        WLAN reconnect modified: ESP restart removed, after 5 trials wait 5min     */
+/* -.20      */
 
 /* V0.x */
 /* WiFi Manager - Done  V0.2 (but desactivated)                                    */
@@ -108,7 +112,7 @@
 //#include <DNSServer.h>
 
 //SW Version
-char rev[] = "V0.08.18-R";//SW Revision
+char rev[] = "V0.08.19-R";//SW Revision
 
 //#define DEBUG
 
@@ -123,15 +127,19 @@ char rev[] = "V0.08.18-R";//SW Revision
   #define DEBUG 0
 #endif
 
-// WiFi connection
+/***********************************************************/
+/*WiFi connection                                          */
+/***********************************************************/
 char wiFiHostname[ ] = "Pool - Control";
 const char* ssid = "Freebox_AFFF90";
 const char* password = "delphinedaniel";
 int wifi_retry = 0;
-int iesp_restart = 0;
+//int iesp_restart = 0;
 long rssi;
-
 WebServer server(80);
+bool WLAN_CONNECTION = false;
+volatile int WiFi_mtbs = 300000;// sequence in ms 5min = 300000ms
+long WiFi_lasttime;  //last time
 
 /***********************************************************/
 /*Telegram Account                                         */
@@ -141,7 +149,7 @@ String BOTtoken;
 String approved_chat_id_1, approved_chat_id_2;
 WiFiClientSecure client;
 UniversalTelegramBot *bot;
-int Bot_mtbs = 1000; //mean time between scan messages
+volatile int Bot_mtbs = 1000; //mean time between scan messages
 long Bot_lasttime;  //last time messages' scan has been done
 long timecount;
 
@@ -467,9 +475,9 @@ void handleNewMessages(int numNewMessages) {
         message += "WiFi Retry:";
         message += (wifi_retry);
         message += "\n";
-        message += "ESP Restart:";
-        message += (iesp_restart);
-        message += "\n";
+        //message += "ESP Restart:";
+        //message += (iesp_restart);
+        //message += "\n";
         message += "SW Revision:";
         message += (rev);
         message += "\n";
@@ -713,7 +721,7 @@ void setup() {
       strcat (rev, "-D");
   }
   //Take default values
-  RELAIS_STATUS.iSUMMERWINTER_STATUS = 0; //1 = Sommer 0 = Winter
+  RELAIS_STATUS.iSUMMERWINTER_STATUS = 1; //1 = Sommer 0 = Winter
   RELAIS_STATUS.iPumpStatus = 1; //0 = ON, 1 = OFF
   RELAIS_STATUS.iLIGHT_STATUS = 1; //0 = ON, 1 = OFF
   RELAIS_STATUS.iPAC_STATUS = 1; //0 = ON, 1 = OFF
@@ -1057,6 +1065,7 @@ void setup() {
   DEBUG_PRINTLN("");
   DEBUG_PRINTLN("WiFi connected");
   rssi = WiFi.RSSI();
+  WLAN_CONNECTION = true;
   DEBUG_PRINT("RSSI:");
   DEBUG_PRINTLN(rssi);
   DEBUG_PRINTLN("••••••••••••••••••••••");
@@ -1171,21 +1180,26 @@ void loop() {
   server.handleClient();//Check Server
 
   //Wifi Connection check - Reconnect
-  while(WiFi.status() != WL_CONNECTED && wifi_retry < 5 ) {
-    wifi_retry++;
-    DEBUG_PRINTLN("WiFi not connected. Try to reconnect");
-    WiFi.disconnect();
-    WiFi.mode(WIFI_OFF);
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
-    delay(100);
-    rssi = WiFi.RSSI();
+  if (millis() > WiFi_lasttime + WiFi_mtbs){
+    while(WiFi.status() != WL_CONNECTED && wifi_retry < 5 ) {
+      wifi_retry++;
+      DEBUG_PRINTLN("WiFi not connected. Try to reconnect");
+      WiFi.disconnect();
+      WiFi.mode(WIFI_OFF);
+      WiFi.mode(WIFI_STA);
+      WiFi.begin(ssid, password);
+      delay(100);
+      rssi = WiFi.RSSI();
+      WLAN_CONNECTION = true;///if internet is available reactivate activities
+    }
   }
   if(wifi_retry >=5) {
     wifi_retry = 0;
-    DEBUG_PRINTLN("Reboot");
-    iesp_restart++;
-    ESP.restart();
+    //DEBUG_PRINTLN("Reboot");
+    //iesp_restart++;
+    //ESP.restart();
+    WLAN_CONNECTION = false;///if no internet is available suspend activities
+    WiFi_lasttime = millis();//no reconnect trial for x time
   }
   //Check Relais status for runtime + status saving
   iSUMMERWINTER_STATUS_OLD = digitalRead(SUMMERWINTER_RELAIS);
@@ -1280,22 +1294,24 @@ void loop() {
 
   lokaleZeit(); //Check for time and save it to the variables
   Alarm();//ALARM check
-  //EMONCS
-  if(millis() > EMONCS_lasttime + EMONCS_updatesequence){
-    //bot->sendMessage("475180895", "uploadtoEMONCMS","");//for testing purposes
-    uploadtoEMONCMS();
-    EMONCS_lasttime = millis();
-  }
-  //Telegram
-  if (millis() > Bot_lasttime + Bot_mtbs)  {
-    int numNewMessages = bot->getUpdates(bot->last_message_received + 1);
-
-    while(numNewMessages) {
-      DEBUG_PRINTLN("got response");
-      handleNewMessages(numNewMessages);
-      numNewMessages = bot->getUpdates(bot->last_message_received + 1);
+  if(WLAN_CONNECTION == true){//if no internet is available suspend activities
+    //EMONCS
+    if(millis() > EMONCS_lasttime + EMONCS_updatesequence){
+      //bot->sendMessage("475180895", "uploadtoEMONCMS","");//for testing purposes
+      uploadtoEMONCMS();
+      EMONCS_lasttime = millis();
     }
-    Bot_lasttime = millis();
+    //Telegram
+    if (millis() > Bot_lasttime + Bot_mtbs)  {
+      int numNewMessages = bot->getUpdates(bot->last_message_received + 1);
+
+      while(numNewMessages) {
+        DEBUG_PRINTLN("got response");
+        handleNewMessages(numNewMessages);
+        numNewMessages = bot->getUpdates(bot->last_message_received + 1);
+      }
+      Bot_lasttime = millis();
+    }
   }
 }
 //***********************************************
@@ -2052,7 +2068,7 @@ String SendHTML(){
   ptr +="var formatter3 = new google.visualization.NumberFormat({suffix:' hPa',pattern:'##.#'});\n";
   ptr +="formatter3.format(Presoutdata1,1);\n";
   //set chart options for DS Sensors
-  ptr +="var gaugeOptionsTemp = {min: 0, max: 30, yellowFrom: 0, yellowTo: 18, greenFrom: 18, greenTo: 24, minorTicks: 1, majorTicks: ['0','5','10','15','20','25','30']};\n";
+  ptr +="var gaugeOptionsTemp = {min: 0, max: 30, yellowFrom: 0, yellowTo: 18, greenFrom: 18, greenTo: 30, minorTicks: 1, majorTicks: ['0','5','10','15','20','25','30']};\n";
   //set chart options for BME280 Temperature
   ptr +="var gaugeOptionsTempOUT = {min: -20, max: 50, majorTicks: ['-20','-10','0','10','20','30','40','50']};\n";
   //set chart options for BME280 Humidity
