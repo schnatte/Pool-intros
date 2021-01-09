@@ -14,6 +14,7 @@ A distance control can be done over telegram
 - [x] Quality of reception of WiFi Signal
 - [x] Implement EMONCS for Monitoring
 - [x] Temperature Sensor in the skimmer
+- [ ] UVx index Sensor measurement
 - [ ] Pressure Control for Filter
 - [ ] PH Measurement
 - [ ] Redox Measurement
